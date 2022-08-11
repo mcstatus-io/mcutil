@@ -13,16 +13,9 @@ import (
 	"net"
 	"strings"
 	"time"
-)
 
-type VoteOptions struct {
-	ServiceName string
-	Username    string
-	Token       string
-	UUID        string
-	Timestamp   time.Time
-	Timeout     time.Duration
-}
+	"github.com/mcstatus-io/mcutil/options"
+)
 
 type voteMessage struct {
 	Payload   string `json:"payload"`
@@ -44,8 +37,8 @@ type voteResponse struct {
 }
 
 // SendVote sends a Votifier vote to the specified Minecraft server
-func SendVote(host string, port uint16, options VoteOptions) error {
-	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), options.Timeout)
+func SendVote(host string, port uint16, opts options.Vote) error {
+	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return err
@@ -55,7 +48,7 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 
 	r := bufio.NewReader(conn)
 
-	if err = conn.SetDeadline(time.Now().Add(options.Timeout)); err != nil {
+	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return err
 	}
 
@@ -85,12 +78,12 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 		buf := &bytes.Buffer{}
 
 		payload := votePayload{
-			ServiceName: options.ServiceName,
-			Username:    options.Username,
+			ServiceName: opts.ServiceName,
+			Username:    opts.Username,
 			Address:     fmt.Sprintf("%s:%d", host, port),
-			Timestamp:   options.Timestamp.UnixNano() / int64(time.Millisecond),
+			Timestamp:   opts.Timestamp.UnixMilli(),
 			Challenge:   challenge,
-			UUID:        options.UUID,
+			UUID:        opts.UUID,
 		}
 
 		payloadData, err := json.Marshal(payload)
@@ -99,7 +92,7 @@ func SendVote(host string, port uint16, options VoteOptions) error {
 			return err
 		}
 
-		hash := hmac.New(sha256.New, []byte(options.Token))
+		hash := hmac.New(sha256.New, []byte(opts.Token))
 		hash.Write(payloadData)
 
 		message := voteMessage{

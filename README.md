@@ -129,10 +129,13 @@ func main() {
 ## Send Vote
 
 ```go
-import "github.com/mcstatus-io/mcutil"
+import (
+    "github.com/mcstatus-io/mcutil"
+    "github.com/mcstatus-io/mcutil/options"
+)
 
 func main() {
-    err := mcutil.SendVote("127.0.0.1", 8192, mcutil.VoteOptions{
+    err := mcutil.SendVote("127.0.0.1", 8192, options.Vote{
 		ServiceName: "my-service",
 		Username:    "PassTheMayo",
 		Token:       "abc123", // server's Votifier token

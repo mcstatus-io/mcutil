@@ -53,7 +53,7 @@ func Status(host string, port uint16, options ...options.JavaStatus) (*response.
 
 	var srvResult *response.SRVRecord = nil
 
-	if opts.EnableSRV {
+	if opts.EnableSRV && port == 25565 {
 		record, err := LookupSRV(host, port)
 
 		if err == nil && record != nil {

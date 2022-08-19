@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"net"
 	"regexp"
 	"strconv"
 )
 
 var (
-	addressRegExp = regexp.MustCompile("^([A-Za-z0-9.]+)(?::(\\d{1,5}))?$")
+	addressRegExp = regexp.MustCompile(`^([A-Za-z0-9.]+)(?::(\d{1,5}))?$`)
 )
 
 func decodeASCII(input []byte) string {
@@ -30,6 +31,21 @@ func writePacket(data *bytes.Buffer, w io.Writer) error {
 	_, err := io.Copy(w, data)
 
 	return err
+}
+
+// Resolves any Minecraft SRV record from the DNS of the website
+func LookupSRV(host string, port uint16) (*net.SRV, error) {
+	_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(addrs) < 1 {
+		return nil, nil
+	}
+
+	return addrs[0], nil
 }
 
 // ParseAddress parses the host and port out of an address string

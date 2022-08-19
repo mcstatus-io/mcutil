@@ -31,7 +31,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 
 	var srvResult *response.SRVRecord = nil
 
-	if opts.EnableSRV {
+	if opts.EnableSRV && port == 19132 {
 		record, err := LookupSRV(host, port)
 
 		if err == nil && record != nil {

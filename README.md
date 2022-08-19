@@ -1,4 +1,4 @@
-# mcstatus
+# mcutil
 ![](https://img.shields.io/github/languages/code-size/mcstatus-io/mcutil)
 ![](https://img.shields.io/github/issues/mcstatus-io/mcutil)
 ![](https://img.shields.io/github/license/mcstatus-io/mcutil)

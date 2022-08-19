@@ -4,7 +4,7 @@
 ![](https://img.shields.io/github/license/mcstatus-io/mcutil)
 ![](https://img.shields.io/uptimerobot/ratio/m790234681-f7dbf52397f005c0699ac797)
 
-A library for interacting with the Minecraft API in Go.
+A zero-dependency library for interacting with the Minecraft API in Go. Supports retrieving the status of any Minecraft server (Java or Bedrock Edition), querying a server for information, sending remote commands with RCON, and sending Votifier votes. Look at the examples in this readme or search through the documentation instead.
 
 ## Installation
 
@@ -34,7 +34,7 @@ func main() {
 }
 ```
 
-### Legacy Status (< 1.7)
+### Legacy Status (‹ 1.7)
 
 ```go
 import "github.com/mcstatus-io/mcutil"

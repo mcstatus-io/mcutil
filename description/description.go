@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"html"
 	"strings"
-
-	"github.com/fatih/color"
 )
 
 var (
@@ -66,25 +64,6 @@ var (
 		"white":         "#ffffff",
 		"minecoin_gold": "#ddd605",
 	}
-	ansiColorLookupTable = map[string]color.Attribute{
-		"black":         color.FgBlack,
-		"dark_blue":     color.FgBlue,
-		"dark_green":    color.FgGreen,
-		"dark_aqua":     color.FgCyan,
-		"dark_red":      color.FgRed,
-		"dark_purple":   color.FgMagenta,
-		"gold":          color.FgYellow,
-		"gray":          color.FgHiBlack,
-		"dark_gray":     color.FgHiBlack,
-		"blue":          color.FgHiBlue,
-		"green":         color.FgHiGreen,
-		"aqua":          color.FgHiCyan,
-		"red":           color.FgHiRed,
-		"light_purple":  color.FgHiMagenta,
-		"yellow":        color.FgHiYellow,
-		"white":         color.FgHiWhite,
-		"minecoin_gold": color.FgHiYellow,
-	}
 )
 
 type FormatItem struct {
@@ -99,7 +78,6 @@ type FormatItem struct {
 
 type MOTD struct {
 	Tree  []FormatItem `json:"-"`
-	ANSI  string       `json:"-"`
 	Raw   string       `json:"raw"`
 	Clean string       `json:"clean"`
 	HTML  string       `json:"html"`
@@ -143,7 +121,6 @@ func ParseMOTD(desc interface{}) (*MOTD, error) {
 
 	return &MOTD{
 		Tree:  tree,
-		ANSI:  toANSI(tree),
 		Raw:   toRaw(tree),
 		Clean: toClean(tree),
 		HTML:  toHTML(tree),
@@ -276,36 +253,6 @@ func toHTML(tree []FormatItem) (res string) {
 	}
 
 	res += "</span>"
-
-	return
-}
-
-func toANSI(tree []FormatItem) (res string) {
-	for _, v := range tree {
-		attr := make([]color.Attribute, 0)
-
-		if color, ok := ansiColorLookupTable[v.Color]; ok {
-			attr = append(attr, color)
-		}
-
-		if v.Bold {
-			attr = append(attr, color.Bold)
-		}
-
-		if v.Strikethrough {
-			attr = append(attr, color.CrossedOut)
-		}
-
-		if v.Underline {
-			attr = append(attr, color.Underline)
-		}
-
-		if v.Italic {
-			attr = append(attr, color.Italic)
-		}
-
-		res += color.New(attr...).Sprintf(v.Text)
-	}
 
 	return
 }

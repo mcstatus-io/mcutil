@@ -66,7 +66,7 @@ var (
 	}
 )
 
-type FormatItem struct {
+type formatItem struct {
 	Text          string `json:"text"`
 	Color         string `json:"color"`
 	Obfuscated    bool   `json:"obfuscated"`
@@ -77,18 +77,14 @@ type FormatItem struct {
 }
 
 type MOTD struct {
-	Tree  []FormatItem `json:"-"`
-	Raw   string       `json:"raw"`
-	Clean string       `json:"clean"`
-	HTML  string       `json:"html"`
-}
-
-func (m MOTD) String() string {
-	return m.Clean
+	tree  []formatItem
+	Raw   string `json:"raw"`
+	Clean string `json:"clean"`
+	HTML  string `json:"html"`
 }
 
 func ParseMOTD(desc interface{}) (*MOTD, error) {
-	var tree []FormatItem
+	var tree []formatItem
 
 	switch v := desc.(type) {
 	case string:
@@ -120,14 +116,14 @@ func ParseMOTD(desc interface{}) (*MOTD, error) {
 	}
 
 	return &MOTD{
-		Tree:  tree,
+		tree:  tree,
 		Raw:   toRaw(tree),
 		Clean: toClean(tree),
 		HTML:  toHTML(tree),
 	}, nil
 }
 
-func toRaw(tree []FormatItem) string {
+func toRaw(tree []formatItem) string {
 	result := ""
 
 	for _, v := range tree {
@@ -165,7 +161,7 @@ func toRaw(tree []FormatItem) string {
 	return result
 }
 
-func toClean(tree []FormatItem) (res string) {
+func toClean(tree []formatItem) (res string) {
 	for _, v := range tree {
 		res += v.Text
 	}
@@ -173,7 +169,7 @@ func toClean(tree []FormatItem) (res string) {
 	return
 }
 
-func toHTML(tree []FormatItem) (res string) {
+func toHTML(tree []formatItem) (res string) {
 	res = "<span>"
 
 	for _, v := range tree {
@@ -319,10 +315,10 @@ func parseChatObject(m map[string]interface{}) (res string) {
 	return
 }
 
-func parseString(s string) ([]FormatItem, error) {
-	tree := make([]FormatItem, 0)
+func parseString(s string) ([]formatItem, error) {
+	tree := make([]formatItem, 0)
 
-	item := FormatItem{
+	item := formatItem{
 		Text:  "",
 		Color: "white",
 	}
@@ -343,7 +339,7 @@ func parseString(s string) ([]FormatItem, error) {
 		if char == '\n' {
 			tree = append(tree, item)
 
-			item = FormatItem{
+			item = formatItem{
 				Text:  "\n",
 				Color: "white",
 			}
@@ -377,7 +373,7 @@ func parseString(s string) ([]FormatItem, error) {
 						tree = append(tree, item)
 					}
 
-					item = FormatItem{
+					item = formatItem{
 						Text:  "",
 						Color: name,
 					}
@@ -443,7 +439,7 @@ func parseString(s string) ([]FormatItem, error) {
 						tree = append(tree, item)
 					}
 
-					item = FormatItem{
+					item = formatItem{
 						Text:  "",
 						Color: "white",
 					}

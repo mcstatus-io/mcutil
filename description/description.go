@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	formattingColorCodeLookupTable = map[rune]string{
+	FormattingColorCodeLookupTable = map[rune]string{
 		'0': "black",
 		'1': "dark_blue",
 		'2': "dark_green",
@@ -26,7 +26,7 @@ var (
 		'f': "white",
 		'g': "minecoin_gold",
 	}
-	colorNameLookupTable = map[string]rune{
+	ColorNameLookupTable = map[string]rune{
 		"black":         '0',
 		"dark_blue":     '1',
 		"dark_green":    '2',
@@ -45,7 +45,7 @@ var (
 		"white":         'f',
 		"minecoin_gold": 'g',
 	}
-	htmlColorLookupTable = map[string]string{
+	HTMLColorLookupTable = map[string]string{
 		"black":         "#000000",
 		"dark_blue":     "#0000aa",
 		"dark_green":    "#00aa00",
@@ -128,7 +128,7 @@ func toRaw(tree []formatItem) string {
 
 	for _, v := range tree {
 		if v.Color != "white" {
-			colorCode, ok := colorNameLookupTable[v.Color]
+			colorCode, ok := ColorNameLookupTable[v.Color]
 
 			if ok {
 				result += "\u00A7" + string(colorCode)
@@ -176,7 +176,7 @@ func toHTML(tree []formatItem) (res string) {
 		classes := make([]string, 0)
 		styles := make(map[string]string)
 
-		color, ok := htmlColorLookupTable[v.Color]
+		color, ok := HTMLColorLookupTable[v.Color]
 
 		if ok {
 			styles["color"] = color
@@ -257,7 +257,7 @@ func parseChatObject(m map[string]interface{}) (res string) {
 	color, ok := m["color"].(string)
 
 	if ok {
-		code, ok := colorNameLookupTable[color]
+		code, ok := ColorNameLookupTable[color]
 
 		if ok {
 			res += "\u00A7" + string(code)
@@ -365,7 +365,7 @@ func parseString(s string) ([]formatItem, error) {
 
 		// Color code
 		{
-			name, ok := formattingColorCodeLookupTable[code]
+			name, ok := FormattingColorCodeLookupTable[code]
 
 			if ok {
 				if item.Obfuscated || item.Bold || item.Strikethrough || item.Underline || item.Italic || name != item.Color {

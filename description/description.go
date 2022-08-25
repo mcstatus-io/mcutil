@@ -116,7 +116,7 @@ func ParseMOTD(desc interface{}) (*MOTD, error) {
 	}
 
 	return &MOTD{
-		tree:  tree,
+		Tree:  tree,
 		Raw:   toRaw(tree),
 		Clean: toClean(tree),
 		HTML:  toHTML(tree),

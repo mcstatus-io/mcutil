@@ -77,10 +77,10 @@ type formatItem struct {
 }
 
 type MOTD struct {
-	tree  []formatItem
-	Raw   string `json:"raw"`
-	Clean string `json:"clean"`
-	HTML  string `json:"html"`
+	Tree  []formatItem `json:"-"`
+	Raw   string       `json:"raw"`
+	Clean string       `json:"clean"`
+	HTML  string       `json:"html"`
 }
 
 func ParseMOTD(desc interface{}) (*MOTD, error) {

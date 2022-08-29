@@ -264,34 +264,109 @@ func parseChatObject(m map[string]interface{}) (res string) {
 		}
 	}
 
-	bold, ok := m["bold"].(string)
+	if v, ok := m["bold"]; ok {
+		switch v := v.(type) {
+		case string:
+			{
+				if v == "true" {
+					res += "\u00A7l"
+				}
 
-	if ok && bold == "true" {
-		res += "\u00A7l"
+				break
+			}
+		case bool:
+			{
+				if v {
+					res += "\u00A7l"
+				}
+
+				break
+			}
+		}
 	}
 
-	italic, ok := m["italic"].(string)
+	if v, ok := m["italic"]; ok {
+		switch v := v.(type) {
+		case string:
+			{
+				if v == "true" {
+					res += "\u00A7o"
+				}
 
-	if ok && italic == "true" {
-		res += "\u00A7o"
+				break
+			}
+		case bool:
+			{
+				if v {
+					res += "\u00A7o"
+				}
+
+				break
+			}
+		}
 	}
 
-	underline, ok := m["underlined"].(string)
+	if v, ok := m["underlined"]; ok {
+		switch v := v.(type) {
+		case string:
+			{
+				if v == "true" {
+					res += "\u00A7n"
+				}
 
-	if ok && underline == "true" {
-		res += "\u00A7n"
+				break
+			}
+		case bool:
+			{
+				if v {
+					res += "\u00A7n"
+				}
+
+				break
+			}
+		}
 	}
 
-	strikethrough, ok := m["strikethrough"].(string)
+	if v, ok := m["strikethrough"]; ok {
+		switch v := v.(type) {
+		case string:
+			{
+				if v == "true" {
+					res += "\u00A7m"
+				}
 
-	if ok && strikethrough == "true" {
-		res += "\u00A7m"
+				break
+			}
+		case bool:
+			{
+				if v {
+					res += "\u00A7m"
+				}
+
+				break
+			}
+		}
 	}
 
-	obfuscated, ok := m["obfuscated"].(string)
+	if v, ok := m["obfuscated"]; ok {
+		switch v := v.(type) {
+		case string:
+			{
+				if v == "true" {
+					res += "\u00A7k"
+				}
 
-	if ok && obfuscated == "true" {
-		res += "\u00A7k"
+				break
+			}
+		case bool:
+			{
+				if v {
+					res += "\u00A7k"
+				}
+
+				break
+			}
+		}
 	}
 
 	text, ok := m["text"].(string)

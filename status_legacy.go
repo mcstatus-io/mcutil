@@ -82,6 +82,10 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 			return nil, err
 		}
 
+		if length == 0 {
+			return nil, fmt.Errorf("no information returned from server with packet length of zero")
+		}
+
 		data := make([]byte, length*2)
 
 		if _, err = r.Read(data); err != nil {

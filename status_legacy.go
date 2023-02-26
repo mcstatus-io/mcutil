@@ -82,30 +82,40 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 			return nil, err
 		}
 
-		if length == 0 {
-			return nil, fmt.Errorf("no information returned from server with packet length of zero")
+		if length < 2 {
+			return nil, fmt.Errorf("no information returned from server with packet length less than 2")
 		}
 
-		data := make([]byte, length*2)
+		data := make([]uint16, length)
 
-		if _, err = r.Read(data); err != nil {
+		if err = binary.Read(r, binary.BigEndian, &data); err != nil {
 			return nil, err
 		}
 
-		byteData := make([]uint16, length)
+		result := string(utf16.Decode(data))
 
-		for i, l := 0, len(data); i < l; i += 2 {
-			byteData[i/2] = (uint16(data[i]) << 8) | uint16(data[i+1])
-		}
-
-		result := string(utf16.Decode(byteData))
-
-		if byteData[0] == 0x00A7 && byteData[1] == 0x0031 {
+		if data[0] == 0x00A7 && data[1] == 0x0031 {
 			// 1.4+ server
 
 			split := strings.Split(result, "\x00")
 
+			if len(split) < 6 {
+				return nil, fmt.Errorf("server did not send enough data back")
+			}
+
 			protocolVersion, err := strconv.ParseInt(split[1], 10, 32)
+
+			if err != nil {
+				return nil, err
+			}
+
+			versionTree, err := description.ParseMOTD(split[2])
+
+			if err != nil {
+				return nil, err
+			}
+
+			motd, err := description.ParseMOTD(split[3])
 
 			if err != nil {
 				return nil, err
@@ -118,18 +128,6 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 			}
 
 			maxPlayers, err := strconv.ParseInt(split[5], 10, 32)
-
-			if err != nil {
-				return nil, err
-			}
-
-			motd, err := description.ParseMOTD(split[3])
-
-			if err != nil {
-				return nil, err
-			}
-
-			versionTree, err := description.ParseMOTD(split[2])
 
 			if err != nil {
 				return nil, err
@@ -154,6 +152,16 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 
 			split := strings.Split(result, "\u00A7")
 
+			if len(split) < 3 {
+				return nil, fmt.Errorf("server did not send enough data back")
+			}
+
+			motd, err := description.ParseMOTD(split[0])
+
+			if err != nil {
+				return nil, err
+			}
+
 			onlinePlayers, err := strconv.ParseInt(split[1], 10, 32)
 
 			if err != nil {
@@ -161,12 +169,6 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 			}
 
 			maxPlayers, err := strconv.ParseInt(split[2], 10, 32)
-
-			if err != nil {
-				return nil, err
-			}
-
-			motd, err := description.ParseMOTD(split[0])
 
 			if err != nil {
 				return nil, err

@@ -2,7 +2,6 @@ package description
 
 import (
 	"fmt"
-	"html"
 	"strings"
 )
 
@@ -66,53 +65,35 @@ var (
 	}
 )
 
-type formatItem struct {
-	Text          string `json:"text"`
-	Color         string `json:"color"`
-	Obfuscated    bool   `json:"obfuscated"`
-	Bold          bool   `json:"bold"`
-	Strikethrough bool   `json:"strikethrough"`
-	Underline     bool   `json:"underline"`
-	Italic        bool   `json:"italic"`
-}
-
 type MOTD struct {
-	Tree  []formatItem `json:"-"`
+	Tree  []FormatItem `json:"-"`
 	Raw   string       `json:"raw"`
 	Clean string       `json:"clean"`
 	HTML  string       `json:"html"`
 }
 
-func ParseMOTD(desc interface{}) (*MOTD, error) {
-	var tree []formatItem
+func ParseMOTD(desc interface{}) (res *MOTD, err error) {
+	var tree []FormatItem
 
 	switch v := desc.(type) {
 	case string:
 		{
-			t, err := parseString(v)
-
-			if err != nil {
-				return nil, err
-			}
-
-			tree = t
+			tree, err = parseString(v)
 
 			break
 		}
 	case map[string]interface{}:
 		{
-			t, err := parseString(parseChatObject(v))
-
-			if err != nil {
-				return nil, err
-			}
-
-			tree = t
+			tree, err = parseString(parseChatObject(v))
 
 			break
 		}
 	default:
-		return nil, fmt.Errorf("unknown description type: %T", desc)
+		err = fmt.Errorf("unknown description type: %T", desc)
+	}
+
+	if err != nil {
+		return
 	}
 
 	return &MOTD{
@@ -123,266 +104,69 @@ func ParseMOTD(desc interface{}) (*MOTD, error) {
 	}, nil
 }
 
-func toRaw(tree []formatItem) string {
-	result := ""
-
+func toRaw(tree []FormatItem) (result string) {
 	for _, v := range tree {
-		if v.Color != "white" {
-			colorCode, ok := ColorNameLookupTable[v.Color]
-
-			if ok {
-				result += "\u00A7" + string(colorCode)
-			}
-		}
-
-		if v.Obfuscated {
-			result += "\u00A7k"
-		}
-
-		if v.Bold {
-			result += "\u00A7l"
-		}
-
-		if v.Strikethrough {
-			result += "\u00A7m"
-		}
-
-		if v.Underline {
-			result += "\u00A7n"
-		}
-
-		if v.Italic {
-			result += "\u00A7o"
-		}
-
-		result += v.Text
-	}
-
-	return result
-}
-
-func toClean(tree []formatItem) (res string) {
-	for _, v := range tree {
-		res += v.Text
+		result += v.Raw()
 	}
 
 	return
 }
 
-func toHTML(tree []formatItem) (res string) {
-	res = "<span>"
-
+func toClean(tree []FormatItem) (result string) {
 	for _, v := range tree {
-		classes := make([]string, 0)
-		styles := make(map[string]string)
-
-		color, ok := HTMLColorLookupTable[v.Color]
-
-		if ok {
-			styles["color"] = color
-		}
-
-		if v.Obfuscated {
-			classes = append(classes, "minecraft-format-obfuscated")
-		}
-
-		if v.Bold {
-			styles["font-weight"] = "bold"
-		}
-
-		if v.Strikethrough {
-			if _, ok = styles["text-decoration"]; ok {
-				styles["text-decoration"] += " "
-			}
-
-			styles["text-decoration"] += "line-through"
-		}
-
-		if v.Underline {
-			if _, ok = styles["text-decoration"]; ok {
-				styles["text-decoration"] += " "
-			}
-
-			styles["text-decoration"] += "underline"
-		}
-
-		if v.Italic {
-			styles["font-style"] = "italic"
-		}
-
-		res += "<span"
-
-		if len(classes) > 0 {
-			res += " class=\""
-
-			for _, v := range classes {
-				res += v
-			}
-
-			res += "\""
-		}
-
-		if len(styles) > 0 {
-			res += " style=\""
-
-			keys := make([]string, 0, len(styles))
-
-			for k := range styles {
-				keys = append(keys, k)
-			}
-
-			for i, l := 0, len(keys); i < l; i++ {
-				key := keys[i]
-				value := styles[key]
-
-				res += fmt.Sprintf("%s: %s;", key, value)
-
-				if i+1 != l {
-					res += " "
-				}
-			}
-
-			res += "\""
-		}
-
-		res += fmt.Sprintf(">%s</span>", html.EscapeString(v.Text))
+		result += v.Clean()
 	}
-
-	res += "</span>"
 
 	return
 }
 
-func parseChatObject(m map[string]interface{}) (res string) {
-	color, ok := m["color"].(string)
+func toHTML(tree []FormatItem) (result string) {
+	result = "<span>"
 
-	if ok {
-		code, ok := ColorNameLookupTable[color]
-
-		if ok {
-			res += "\u00A7" + string(code)
-		}
+	for _, v := range tree {
+		result += v.HTML()
 	}
 
-	if v, ok := m["bold"]; ok {
-		switch v := v.(type) {
-		case string:
-			{
-				if v == "true" {
-					res += "\u00A7l"
-				}
+	result += "</span>"
 
-				break
-			}
-		case bool:
-			{
-				if v {
-					res += "\u00A7l"
-				}
+	return
+}
 
-				break
-			}
-		}
+func parseChatObject(m map[string]interface{}) (result string) {
+	if v, ok := m["color"].(string); ok {
+		result += ParseColor(v).ToRaw()
+	} else {
+		result += White.ToRaw()
 	}
 
-	if v, ok := m["italic"]; ok {
-		switch v := v.(type) {
-		case string:
-			{
-				if v == "true" {
-					res += "\u00A7o"
-				}
-
-				break
-			}
-		case bool:
-			{
-				if v {
-					res += "\u00A7o"
-				}
-
-				break
-			}
-		}
+	if v, ok := m["bold"]; ok && parseBool(v) {
+		result += "\u00A7l"
 	}
 
-	if v, ok := m["underlined"]; ok {
-		switch v := v.(type) {
-		case string:
-			{
-				if v == "true" {
-					res += "\u00A7n"
-				}
-
-				break
-			}
-		case bool:
-			{
-				if v {
-					res += "\u00A7n"
-				}
-
-				break
-			}
-		}
+	if v, ok := m["italic"]; ok && parseBool(v) {
+		result += "\u00A7o"
 	}
 
-	if v, ok := m["strikethrough"]; ok {
-		switch v := v.(type) {
-		case string:
-			{
-				if v == "true" {
-					res += "\u00A7m"
-				}
-
-				break
-			}
-		case bool:
-			{
-				if v {
-					res += "\u00A7m"
-				}
-
-				break
-			}
-		}
+	if v, ok := m["underlined"]; ok && parseBool(v) {
+		result += "\u00A7n"
 	}
 
-	if v, ok := m["obfuscated"]; ok {
-		switch v := v.(type) {
-		case string:
-			{
-				if v == "true" {
-					res += "\u00A7k"
-				}
-
-				break
-			}
-		case bool:
-			{
-				if v {
-					res += "\u00A7k"
-				}
-
-				break
-			}
-		}
+	if v, ok := m["strikethrough"]; ok && parseBool(v) {
+		result += "\u00A7m"
 	}
 
-	text, ok := m["text"].(string)
-
-	if ok {
-		res += text
+	if v, ok := m["obfuscated"]; ok && parseBool(v) {
+		result += "\u00A7k"
 	}
 
-	extra, ok := m["extra"].([]interface{})
+	if text, ok := m["text"].(string); ok {
+		result += text
+	}
 
-	if ok {
+	if extra, ok := m["extra"].([]interface{}); ok {
 		for _, v := range extra {
-			v2, ok := v.(map[string]interface{})
-
-			if ok {
-				res += parseChatObject(v2)
+			if v2, ok := v.(map[string]interface{}); ok {
+				result += parseChatObject(v2)
 			}
 		}
 	}
@@ -390,12 +174,12 @@ func parseChatObject(m map[string]interface{}) (res string) {
 	return
 }
 
-func parseString(s string) ([]formatItem, error) {
-	tree := make([]formatItem, 0)
+func parseString(s string) ([]FormatItem, error) {
+	tree := make([]FormatItem, 0)
 
-	item := formatItem{
+	item := FormatItem{
 		Text:  "",
-		Color: "white",
+		Color: White,
 	}
 
 	r := strings.NewReader(s)
@@ -414,9 +198,9 @@ func parseString(s string) ([]formatItem, error) {
 		if char == '\n' {
 			tree = append(tree, item)
 
-			item = formatItem{
+			item = FormatItem{
 				Text:  "\n",
-				Color: "white",
+				Color: White,
 			}
 
 			continue
@@ -440,20 +224,20 @@ func parseString(s string) ([]formatItem, error) {
 
 		// Color code
 		{
-			name, ok := FormattingColorCodeLookupTable[code]
+			if code >= '0' && code <= 'g' {
+				newColor := ParseColor(string(code))
 
-			if ok {
-				if item.Obfuscated || item.Bold || item.Strikethrough || item.Underline || item.Italic || name != item.Color {
+				if item.Obfuscated || item.Bold || item.Strikethrough || item.Underline || item.Italic || newColor != item.Color {
 					if len(item.Text) > 0 {
 						tree = append(tree, item)
 					}
 
-					item = formatItem{
+					item = FormatItem{
 						Text:  "",
-						Color: name,
+						Color: newColor,
 					}
 				} else {
-					item.Color = name
+					item.Color = newColor
 				}
 
 				continue
@@ -514,9 +298,9 @@ func parseString(s string) ([]formatItem, error) {
 						tree = append(tree, item)
 					}
 
-					item = formatItem{
+					item = FormatItem{
 						Text:  "",
-						Color: "white",
+						Color: White,
 					}
 				}
 			}
@@ -526,4 +310,17 @@ func parseString(s string) ([]formatItem, error) {
 	tree = append(tree, item)
 
 	return tree, nil
+}
+
+func parseBool(value interface{}) bool {
+	switch v := value.(type) {
+	case bool:
+		return v
+	case string:
+		return strings.ToLower(v) == "true"
+	case int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64:
+		return v == 1
+	default:
+		return false
+	}
 }

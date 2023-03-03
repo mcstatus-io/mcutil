@@ -5,66 +5,6 @@ import (
 	"strings"
 )
 
-var (
-	FormattingColorCodeLookupTable = map[rune]string{
-		'0': "black",
-		'1': "dark_blue",
-		'2': "dark_green",
-		'3': "dark_aqua",
-		'4': "dark_red",
-		'5': "dark_purple",
-		'6': "gold",
-		'7': "gray",
-		'8': "dark_gray",
-		'9': "blue",
-		'a': "green",
-		'b': "aqua",
-		'c': "red",
-		'd': "light_purple",
-		'e': "yellow",
-		'f': "white",
-		'g': "minecoin_gold",
-	}
-	ColorNameLookupTable = map[string]rune{
-		"black":         '0',
-		"dark_blue":     '1',
-		"dark_green":    '2',
-		"dark_aqua":     '3',
-		"dark_red":      '4',
-		"dark_purple":   '5',
-		"gold":          '6',
-		"gray":          '7',
-		"dark_gray":     '8',
-		"blue":          '9',
-		"green":         'a',
-		"aqua":          'b',
-		"red":           'c',
-		"light_purple":  'd',
-		"yellow":        'e',
-		"white":         'f',
-		"minecoin_gold": 'g',
-	}
-	HTMLColorLookupTable = map[string]string{
-		"black":         "#000000",
-		"dark_blue":     "#0000aa",
-		"dark_green":    "#00aa00",
-		"dark_aqua":     "#00aaaa",
-		"dark_red":      "#aa0000",
-		"dark_purple":   "#aa00aa",
-		"gold":          "#ffaa00",
-		"gray":          "#aaaaaa",
-		"dark_gray":     "#555555",
-		"blue":          "#5555ff",
-		"green":         "#55ff55",
-		"aqua":          "#55ffff",
-		"red":           "#ff5555",
-		"light_purple":  "#ff55ff",
-		"yellow":        "#ffff55",
-		"white":         "#ffffff",
-		"minecoin_gold": "#ddd605",
-	}
-)
-
 type MOTD struct {
 	Tree  []FormatItem `json:"-"`
 	Raw   string       `json:"raw"`
@@ -72,19 +12,25 @@ type MOTD struct {
 	HTML  string       `json:"html"`
 }
 
-func ParseMOTD(desc interface{}) (res *MOTD, err error) {
+func ParseMOTD(desc interface{}, defaultColor ...Color) (res *MOTD, err error) {
 	var tree []FormatItem
+
+	defColor := White
+
+	if len(defaultColor) > 0 {
+		defColor = defaultColor[0]
+	}
 
 	switch v := desc.(type) {
 	case string:
 		{
-			tree, err = parseString(v)
+			tree, err = parseString(v, defColor)
 
 			break
 		}
 	case map[string]interface{}:
 		{
-			tree, err = parseString(parseChatObject(v))
+			tree, err = parseString(parseChatObject(v, defColor), defColor)
 
 			break
 		}
@@ -132,11 +78,11 @@ func toHTML(tree []FormatItem) (result string) {
 	return
 }
 
-func parseChatObject(m map[string]interface{}) (result string) {
+func parseChatObject(m map[string]interface{}, defaultColor Color) (result string) {
 	if v, ok := m["color"].(string); ok {
 		result += ParseColor(v).ToRaw()
 	} else {
-		result += White.ToRaw()
+		result += defaultColor.ToRaw()
 	}
 
 	if v, ok := m["bold"]; ok && parseBool(v) {
@@ -166,7 +112,7 @@ func parseChatObject(m map[string]interface{}) (result string) {
 	if extra, ok := m["extra"].([]interface{}); ok {
 		for _, v := range extra {
 			if v2, ok := v.(map[string]interface{}); ok {
-				result += parseChatObject(v2)
+				result += parseChatObject(v2, defaultColor)
 			}
 		}
 	}
@@ -174,12 +120,12 @@ func parseChatObject(m map[string]interface{}) (result string) {
 	return
 }
 
-func parseString(s string) ([]FormatItem, error) {
+func parseString(s string, defaultColor Color) ([]FormatItem, error) {
 	tree := make([]FormatItem, 0)
 
 	item := FormatItem{
 		Text:  "",
-		Color: White,
+		Color: defaultColor,
 	}
 
 	r := strings.NewReader(s)
@@ -200,7 +146,7 @@ func parseString(s string) ([]FormatItem, error) {
 
 			item = FormatItem{
 				Text:  "\n",
-				Color: White,
+				Color: defaultColor,
 			}
 
 			continue
@@ -300,7 +246,7 @@ func parseString(s string) ([]FormatItem, error) {
 
 					item = FormatItem{
 						Text:  "",
-						Color: White,
+						Color: defaultColor,
 					}
 				}
 			}

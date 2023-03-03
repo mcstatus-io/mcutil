@@ -18,9 +18,10 @@ import (
 
 var (
 	defaultBedrockStatusOptions = options.BedrockStatus{
-		EnableSRV:  true,
-		Timeout:    time.Second * 5,
-		ClientGUID: 0,
+		EnableSRV:        true,
+		Timeout:          time.Second * 5,
+		ClientGUID:       0,
+		DefaultMOTDColor: description.White,
 	}
 	bedrockMagic = []byte{0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78}
 )
@@ -293,7 +294,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 	}
 
 	if len(motd) > 0 {
-		parsedMOTD, err := description.ParseMOTD(motd)
+		parsedMOTD, err := description.ParseMOTD(motd, opts.DefaultMOTDColor)
 
 		if err != nil {
 			return nil, err

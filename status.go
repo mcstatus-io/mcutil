@@ -17,9 +17,10 @@ import (
 
 var (
 	defaultJavaStatusOptions = options.JavaStatus{
-		EnableSRV:       true,
-		Timeout:         time.Second * 5,
-		ProtocolVersion: 47,
+		EnableSRV:        true,
+		Timeout:          time.Second * 5,
+		ProtocolVersion:  47,
+		DefaultMOTDColor: description.White,
 	}
 )
 
@@ -231,7 +232,7 @@ func Status(host string, port uint16, options ...options.JavaStatus) (*response.
 		}
 	}
 
-	motd, err := description.ParseMOTD(rawResponse.Description)
+	motd, err := description.ParseMOTD(rawResponse.Description, opts.DefaultMOTDColor)
 
 	if err != nil {
 		return nil, err

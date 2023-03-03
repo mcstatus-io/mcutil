@@ -17,8 +17,9 @@ import (
 
 var (
 	defaultJavaStatusLegacyOptions = options.JavaStatusLegacy{
-		EnableSRV: true,
-		Timeout:   time.Second * 5,
+		EnableSRV:        true,
+		Timeout:          time.Second * 5,
+		DefaultMOTDColor: description.White,
 	}
 )
 
@@ -115,7 +116,7 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 				return nil, err
 			}
 
-			motd, err := description.ParseMOTD(split[3])
+			motd, err := description.ParseMOTD(split[3], opts.DefaultMOTDColor)
 
 			if err != nil {
 				return nil, err
@@ -156,7 +157,7 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 				return nil, fmt.Errorf("server did not send enough data back")
 			}
 
-			motd, err := description.ParseMOTD(split[0])
+			motd, err := description.ParseMOTD(split[0], opts.DefaultMOTDColor)
 
 			if err != nil {
 				return nil, err

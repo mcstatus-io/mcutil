@@ -17,8 +17,8 @@ type JavaStatus struct {
 }
 
 type Players struct {
-	Max    int            `json:"max"`
-	Online int            `json:"online"`
+	Max    *int           `json:"max"`
+	Online *int           `json:"online"`
 	Sample []SamplePlayer `json:"sample"`
 }
 

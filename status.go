@@ -30,8 +30,8 @@ type rawJavaStatus struct {
 		Protocol int    `json:"protocol"`
 	} `json:"version"`
 	Players struct {
-		Max    int `json:"max"`
-		Online int `json:"online"`
+		Max    *int `json:"max"`
+		Online *int `json:"online"`
 		Sample []struct {
 			Name string `json:"name"`
 			ID   string `json:"id"`

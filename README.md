@@ -2,9 +2,8 @@
 ![](https://img.shields.io/github/languages/code-size/mcstatus-io/mcutil)
 ![](https://img.shields.io/github/issues/mcstatus-io/mcutil)
 ![](https://img.shields.io/github/license/mcstatus-io/mcutil)
-![](https://img.shields.io/uptimerobot/ratio/m790234681-f7dbf52397f005c0699ac797)
 
-A zero-dependency library for interacting with the Minecraft API in Go. Supports retrieving the status of any Minecraft server (Java or Bedrock Edition), querying a server for information, sending remote commands with RCON, and sending Votifier votes. Look at the examples in this readme or search through the documentation instead.
+A zero-dependency library for interacting with the Minecraft protocol in Go. Supports retrieving the status of any Minecraft server (Java or Bedrock Edition), querying a server for information, sending remote commands with RCON, and sending Votifier votes. Look at the examples in this readme or search through the documentation instead.
 
 ## Installation
 

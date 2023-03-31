@@ -5,14 +5,16 @@ import (
 	"strings"
 )
 
-type MOTD struct {
+// Formatting is a parsed structure of any Minecraft string encoded with color codes or format codes
+type Formatting struct {
 	Tree  []FormatItem `json:"-"`
 	Raw   string       `json:"raw"`
 	Clean string       `json:"clean"`
 	HTML  string       `json:"html"`
 }
 
-func ParseMOTD(desc interface{}, defaultColor ...Color) (res *MOTD, err error) {
+// ParseFormatting parses the formatting of any string or Chat object
+func ParseFormatting(desc interface{}, defaultColor ...Color) (res *Formatting, err error) {
 	var tree []FormatItem
 
 	defColor := White
@@ -42,7 +44,7 @@ func ParseMOTD(desc interface{}, defaultColor ...Color) (res *MOTD, err error) {
 		return
 	}
 
-	return &MOTD{
+	return &Formatting{
 		Tree:  tree,
 		Raw:   toRaw(tree),
 		Clean: toClean(tree),

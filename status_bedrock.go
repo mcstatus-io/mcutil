@@ -294,7 +294,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 	}
 
 	if len(motd) > 0 {
-		parsedMOTD, err := description.ParseMOTD(motd, opts.DefaultMOTDColor)
+		parsedMOTD, err := description.ParseFormatting(motd, opts.DefaultMOTDColor)
 
 		if err != nil {
 			return nil, err

@@ -185,7 +185,7 @@ func BasicQuery(host string, port uint16, options ...options.Query) (*response.B
 				return nil, err
 			}
 
-			description, err := description.ParseMOTD(decodeASCII(data[:len(data)-1]))
+			description, err := description.ParseFormatting(decodeASCII(data[:len(data)-1]))
 
 			if err != nil {
 				return nil, err
@@ -507,7 +507,7 @@ func parseQueryOptions(opts ...options.Query) options.Query {
 	if len(opts) < 1 {
 		options := options.Query(defaultQueryOptions)
 
-		sessionID += 1
+		sessionID++
 
 		options.SessionID = sessionID
 

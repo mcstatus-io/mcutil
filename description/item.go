@@ -5,6 +5,7 @@ import (
 	"html"
 )
 
+// FormatItem is a single formatting item that contains a color and any optional formatting controls
 type FormatItem struct {
 	Text          string `json:"text"`
 	Color         Color  `json:"color"`
@@ -15,6 +16,7 @@ type FormatItem struct {
 	Italic        bool   `json:"italic"`
 }
 
+// Raw returns the Minecraft encoding of the formatting (§ + formatting codes/color + text)
 func (i FormatItem) Raw() (result string) {
 	if i.Color != White {
 		result += i.Color.ToRaw()
@@ -45,10 +47,14 @@ func (i FormatItem) Raw() (result string) {
 	return
 }
 
+// Clean returns the text only of the formatting item
 func (i FormatItem) Clean() string {
 	return i.Text
 }
 
+// HTML returns the HTML representation of the format item.
+// A <span> tag is used as well as the style and class attributes.
+// Obfuscation is encoded as a class with the name 'minecraft-format-obfuscated'.
 func (i FormatItem) HTML() (result string) {
 	classes := make([]string, 0)
 

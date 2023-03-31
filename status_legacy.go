@@ -23,6 +23,7 @@ var (
 	}
 )
 
+// StatusLegacy retrieves the status of any Java Edition Minecraft server, but with reduced properties compared to Status()
 func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
 	opts := parseJavaStatusLegacyOptions(options...)
 
@@ -110,13 +111,13 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 				return nil, err
 			}
 
-			versionTree, err := description.ParseMOTD(split[2])
+			versionTree, err := description.ParseFormatting(split[2])
 
 			if err != nil {
 				return nil, err
 			}
 
-			motd, err := description.ParseMOTD(split[3], opts.DefaultMOTDColor)
+			motd, err := description.ParseFormatting(split[3], opts.DefaultMOTDColor)
 
 			if err != nil {
 				return nil, err
@@ -139,52 +140,52 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 					NameRaw:   versionTree.Raw,
 					NameClean: versionTree.Clean,
 					NameHTML:  versionTree.HTML,
-					Protocol:  int(protocolVersion),
+					Protocol:  protocolVersion,
 				},
 				Players: response.LegacyPlayers{
-					Online: int(onlinePlayers),
-					Max:    int(maxPlayers),
-				},
-				MOTD:      *motd,
-				SRVResult: srvResult,
-			}, nil
-		} else {
-			// < 1.4 server
-
-			split := strings.Split(result, "\u00A7")
-
-			if len(split) < 3 {
-				return nil, fmt.Errorf("server did not send enough data back")
-			}
-
-			motd, err := description.ParseMOTD(split[0], opts.DefaultMOTDColor)
-
-			if err != nil {
-				return nil, err
-			}
-
-			onlinePlayers, err := strconv.ParseInt(split[1], 10, 32)
-
-			if err != nil {
-				return nil, err
-			}
-
-			maxPlayers, err := strconv.ParseInt(split[2], 10, 32)
-
-			if err != nil {
-				return nil, err
-			}
-
-			return &response.JavaStatusLegacy{
-				Version: nil,
-				Players: response.LegacyPlayers{
-					Online: int(onlinePlayers),
-					Max:    int(maxPlayers),
+					Online: onlinePlayers,
+					Max:    maxPlayers,
 				},
 				MOTD:      *motd,
 				SRVResult: srvResult,
 			}, nil
 		}
+
+		// < 1.4 server
+
+		split := strings.Split(result, "\u00A7")
+
+		if len(split) < 3 {
+			return nil, fmt.Errorf("server did not send enough data back")
+		}
+
+		motd, err := description.ParseFormatting(split[0], opts.DefaultMOTDColor)
+
+		if err != nil {
+			return nil, err
+		}
+
+		onlinePlayers, err := strconv.ParseInt(split[1], 10, 32)
+
+		if err != nil {
+			return nil, err
+		}
+
+		maxPlayers, err := strconv.ParseInt(split[2], 10, 32)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &response.JavaStatusLegacy{
+			Version: nil,
+			Players: response.LegacyPlayers{
+				Online: onlinePlayers,
+				Max:    maxPlayers,
+			},
+			MOTD:      *motd,
+			SRVResult: srvResult,
+		}, nil
 	}
 }
 

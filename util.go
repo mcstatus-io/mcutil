@@ -33,7 +33,7 @@ func writePacket(data *bytes.Buffer, w io.Writer) error {
 	return err
 }
 
-// Resolves any Minecraft SRV record from the DNS of the website
+// LookupSRV resolves any Minecraft SRV record from the DNS of the domain
 func LookupSRV(host string, port uint16) (*net.SRV, error) {
 	_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
 

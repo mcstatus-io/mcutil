@@ -27,11 +27,11 @@ var (
 type rawJavaStatus struct {
 	Version struct {
 		Name     string `json:"name"`
-		Protocol int    `json:"protocol"`
+		Protocol int64  `json:"protocol"`
 	} `json:"version"`
 	Players struct {
-		Max    *int `json:"max"`
-		Online *int `json:"online"`
+		Max    *int64 `json:"max"`
+		Online *int64 `json:"online"`
 		Sample []struct {
 			Name string `json:"name"`
 			ID   string `json:"id"`
@@ -48,7 +48,7 @@ type rawJavaStatus struct {
 	} `json:"modinfo"`
 }
 
-// Status retrieves the status of any Minecraft server
+// Status retrieves the status of any 1.7+ Minecraft server
 func Status(host string, port uint16, options ...options.JavaStatus) (*response.JavaStatus, error) {
 	opts := parseJavaStatusOptions(options...)
 
@@ -232,7 +232,7 @@ func Status(host string, port uint16, options ...options.JavaStatus) (*response.
 		}
 	}
 
-	motd, err := description.ParseMOTD(rawResponse.Description, opts.DefaultMOTDColor)
+	motd, err := description.ParseFormatting(rawResponse.Description, opts.DefaultMOTDColor)
 
 	if err != nil {
 		return nil, err
@@ -242,7 +242,7 @@ func Status(host string, port uint16, options ...options.JavaStatus) (*response.
 
 	if rawResponse.Players.Sample != nil {
 		for _, player := range rawResponse.Players.Sample {
-			name, err := description.ParseMOTD(player.Name)
+			name, err := description.ParseFormatting(player.Name)
 
 			if err != nil {
 				return nil, err
@@ -257,7 +257,7 @@ func Status(host string, port uint16, options ...options.JavaStatus) (*response.
 		}
 	}
 
-	version, err := description.ParseMOTD(rawResponse.Version.Name)
+	version, err := description.ParseFormatting(rawResponse.Version.Name)
 
 	if err != nil {
 		return nil, err

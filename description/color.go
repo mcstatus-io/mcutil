@@ -1,27 +1,46 @@
 package description
 
+// Color is a Minecraft color code type
 type Color rune
 
 var (
-	Black        Color = '0'
-	DarkBlue     Color = '1'
-	DarkGreen    Color = '2'
-	DarkAqua     Color = '3'
-	DarkRed      Color = '4'
-	DarkPurple   Color = '5'
-	Gold         Color = '6'
-	Gray         Color = '7'
-	DarkGray     Color = '8'
-	Blue         Color = '9'
-	Green        Color = 'a'
-	Aqua         Color = 'b'
-	Red          Color = 'c'
-	LightPurple  Color = 'd'
-	Yellow       Color = 'e'
-	White        Color = 'f'
+	// Black is Minecraft color code §0 (#000000)
+	Black Color = '0'
+	// DarkBlue is Minecraft color code §1 (#0000aa)
+	DarkBlue Color = '1'
+	// DarkGreen is Minecraft color code §2 (#00aa00)
+	DarkGreen Color = '2'
+	// DarkAqua is Minecraft color code §3 (#00aaaa)
+	DarkAqua Color = '3'
+	// DarkRed is Minecraft color code §4 (#aa0000)
+	DarkRed Color = '4'
+	// DarkPurple is Minecraft color code §5 (#aa00aa)
+	DarkPurple Color = '5'
+	// Gold is Minecraft color code §6 (#ffaa00)
+	Gold Color = '6'
+	// Gray is Minecraft color code §7 (#aaaaaa)
+	Gray Color = '7'
+	// DarkGray is Minecraft color code §8 (#555555)
+	DarkGray Color = '8'
+	// Blue is Minecraft color code §9 (#5555ff)
+	Blue Color = '9'
+	// Green is Minecraft color code §a (#55ff55)
+	Green Color = 'a'
+	// Aqua is Minecraft color code §b (#55ffff)
+	Aqua Color = 'b'
+	// Red is Minecraft color code §c (#ff5555)
+	Red Color = 'c'
+	// LightPurple is Minecraft color code §d (#ff55ff)
+	LightPurple Color = 'd'
+	// Yellow is Minecraft color code §e (#ffff55)
+	Yellow Color = 'e'
+	// White is Minecraft color code §f (#ffffff)
+	White Color = 'f'
+	// MinecoinGold is Minecraft color code §g (#ddd605)
 	MinecoinGold Color = 'g'
 )
 
+// ParseColor attempts to return a Color type based on a color code string, color name string, or a Color type itself
 func ParseColor(value interface{}) Color {
 	switch value {
 	case "0", "black", Black:
@@ -63,10 +82,12 @@ func ParseColor(value interface{}) Color {
 	}
 }
 
+// ToRaw returns the encoded Minecraft formatting of the color (§ + code)
 func (c Color) ToRaw() string {
 	return "\u00A7" + string(c)
 }
 
+// ToHex returns the hex string of the color prefixed with a # symbol
 func (c Color) ToHex() string {
 	switch c {
 	case Black:

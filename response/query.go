@@ -3,7 +3,7 @@ package response
 import "github.com/mcstatus-io/mcutil/description"
 
 type BasicQuery struct {
-	MOTD          description.MOTD
+	MOTD          description.Formatting
 	GameType      string
 	Map           string
 	OnlinePlayers uint64

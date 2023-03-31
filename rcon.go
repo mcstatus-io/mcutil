@@ -18,6 +18,7 @@ var (
 	}
 )
 
+// RCONClient is a client for interacting with RCON and contains multiple methods
 type RCONClient struct {
 	conn        *net.Conn
 	r           *bufio.Reader
@@ -39,6 +40,7 @@ func NewRCON() *RCONClient {
 	}
 }
 
+// Dial creates a new connection to the server
 func (r *RCONClient) Dial(host string, port uint16, options ...options.RCON) error {
 	opts := parseRCONOptions(options...)
 
@@ -58,6 +60,7 @@ func (r *RCONClient) Dial(host string, port uint16, options ...options.RCON) err
 	return nil
 }
 
+// Login communicates authentication with the server using the plaintext password
 func (r *RCONClient) Login(password string) error {
 	if r.conn == nil {
 		return ErrNotConnected
@@ -173,6 +176,7 @@ func (r *RCONClient) Login(password string) error {
 	return nil
 }
 
+// Run executes the command on the server but does not wait for a response
 func (r *RCONClient) Run(command string) error {
 	if r.conn == nil {
 		return ErrNotConnected
@@ -221,6 +225,7 @@ func (r *RCONClient) Run(command string) error {
 	return nil
 }
 
+// Close closes the connection to the server
 func (r *RCONClient) Close() error {
 	r.authSuccess = false
 	r.requestID = 0

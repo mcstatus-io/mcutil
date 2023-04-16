@@ -46,6 +46,18 @@ type rawJavaStatus struct {
 		} `json:"modList"`
 		Type string `json:"type"`
 	} `json:"modinfo"`
+	ForgeData struct {
+		Channels []struct {
+			Required bool   `json:"required"`
+			Res      string `json:"res"`
+			Version  string `json:"version"`
+		} `json:"channels"`
+		FMLNetworkVersion int `json:"fmlNetworkVersion"`
+		Mods              []struct {
+			ID      string `json:"modId"`
+			Version string `json:"modmarker"`
+		} `json:"mods"`
+	} `json:"forgeData"`
 }
 
 // Status retrieves the status of any 1.7+ Minecraft server
@@ -294,6 +306,22 @@ func Status(host string, port uint16, options ...options.JavaStatus) (*response.
 
 		result.ModInfo = &response.ModInfo{
 			Type: rawResponse.ModInfo.Type,
+			Mods: mods,
+		}
+	}
+
+	if rawResponse.ForgeData.Mods != nil {
+		mods := make([]response.Mod, 0)
+
+		for _, mod := range rawResponse.ForgeData.Mods {
+			mods = append(mods, response.Mod{
+				ID:      mod.ID,
+				Version: mod.Version,
+			})
+		}
+
+		result.ModInfo = &response.ModInfo{
+			Type: "FML2",
 			Mods: mods,
 		}
 	}

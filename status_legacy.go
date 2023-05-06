@@ -1,7 +1,6 @@
 package mcutil
 
 import (
-	"bufio"
 	"encoding/binary"
 	"fmt"
 	"net"
@@ -43,15 +42,13 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer conn.Close()
-
-	r := bufio.NewReader(conn)
 
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err
@@ -68,33 +65,46 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 	// Server to client packet
 	// https://wiki.vg/Server_List_Ping#Server_to_client
 	{
-		packetType, err := r.ReadByte()
+		// Packet Type - byte
+		{
+			var packetType byte
 
-		if err != nil {
-			return nil, err
+			if err := binary.Read(conn, binary.BigEndian, &packetType); err != nil {
+				return nil, err
+			}
+
+			if packetType != 0xFF {
+				return nil, fmt.Errorf("status: received unexpected packet type (expected=0xFF, received=0x%02X)", packetType)
+			}
 		}
 
-		if packetType != 0xFF {
-			return nil, fmt.Errorf("unexpected packet type returned from server: 0x%X", packetType)
+		var packetLength uint16
+
+		// Length - uint16
+		{
+			if err = binary.Read(conn, binary.BigEndian, &packetLength); err != nil {
+				return nil, err
+			}
+
+			if packetLength < 2 {
+				return nil, fmt.Errorf("status: received status response with no data (bytes=%d)", packetLength)
+			}
 		}
 
-		var length uint16
+		var data []uint16
 
-		if err = binary.Read(r, binary.BigEndian, &length); err != nil {
-			return nil, err
-		}
+		// Packet Data
+		{
+			data = make([]uint16, packetLength)
 
-		if length < 2 {
-			return nil, fmt.Errorf("no information returned from server with packet length less than 2")
-		}
-
-		data := make([]uint16, length)
-
-		if err = binary.Read(r, binary.BigEndian, &data); err != nil {
-			return nil, err
+			if err = binary.Read(conn, binary.BigEndian, &data); err != nil {
+				return nil, err
+			}
 		}
 
 		result := string(utf16.Decode(data))
+
+		// TODO clean up this code at some point, avoid using string functions
 
 		if data[0] == 0x00A7 && data[1] == 0x0031 {
 			// 1.4+ server
@@ -102,7 +112,7 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 			split := strings.Split(result, "\x00")
 
 			if len(split) < 6 {
-				return nil, fmt.Errorf("server did not send enough data back")
+				return nil, fmt.Errorf("status: not enough information received (expected=6, received=%d)", len(split))
 			}
 
 			protocolVersion, err := strconv.ParseInt(split[1], 10, 32)
@@ -156,7 +166,7 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 		split := strings.Split(result, "\u00A7")
 
 		if len(split) < 3 {
-			return nil, fmt.Errorf("server did not send enough data back")
+			return nil, fmt.Errorf("status: not enough information received (expected=3, received=%d)", len(split))
 		}
 
 		motd, err := description.ParseFormatting(split[0], opts.DefaultMOTDColor)

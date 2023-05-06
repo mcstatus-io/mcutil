@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"strconv"
 	"time"
@@ -44,236 +45,33 @@ func BasicQuery(host string, port uint16, options ...options.Query) (*response.B
 
 	// Handshake request packet
 	// https://wiki.vg/Query#Request
-	{
-		buf := &bytes.Buffer{}
-
-		// Magic - uint16
-		if _, err := buf.Write(magic); err != nil {
-			return nil, err
-		}
-
-		// Type - byte
-		if err := buf.WriteByte(0x09); err != nil {
-			return nil, err
-		}
-
-		// Session ID - int32
-		if err := binary.Write(buf, binary.BigEndian, opts.SessionID&0x0F0F0F0F); err != nil {
-			return nil, err
-		}
-
-		if _, err := io.Copy(conn, buf); err != nil {
-			return nil, err
-		}
+	if err = writeQueryHandshakeRequestPacket(conn, opts.SessionID); err != nil {
+		return nil, err
 	}
-
-	var challengeToken int32
 
 	// Handshake response packet
 	// https://wiki.vg/Query#Response
-	{
-		// Type - byte
-		{
-			v, err := r.ReadByte()
+	challengeToken, err := readQueryHandshakeResponsePacket(r, opts.SessionID)
 
-			if err != nil {
-				return nil, err
-			}
-
-			if v != 0x09 {
-				return nil, ErrUnexpectedResponse
-			}
-		}
-
-		// Session ID - int32
-		{
-			var sessionID int32
-
-			if err := binary.Read(r, binary.BigEndian, &sessionID); err != nil {
-				return nil, err
-			}
-
-			if sessionID != opts.SessionID {
-				return nil, ErrUnexpectedResponse
-			}
-		}
-
-		// Challenge Token - string
-		{
-			data, err := r.ReadBytes(0x00)
-
-			if err != nil {
-				return nil, err
-			}
-
-			v, err := strconv.ParseInt(string(data[:len(data)-1]), 10, 32)
-
-			if err != nil {
-				return nil, err
-			}
-
-			challengeToken = int32(v)
-		}
+	if err != nil {
+		return nil, err
 	}
 
 	// Basic stat request packet
 	// https://wiki.vg/Query#Request_2
-	{
-		buf := &bytes.Buffer{}
-
-		// Magic - uint16
-		if _, err := buf.Write(magic); err != nil {
-			return nil, err
-		}
-
-		// Type - byte
-		if err := buf.WriteByte(0x00); err != nil {
-			return nil, err
-		}
-
-		// Session ID - int32
-		if err := binary.Write(buf, binary.BigEndian, opts.SessionID&0x0F0F0F0F); err != nil {
-			return nil, err
-		}
-
-		// Challenge Token - int32
-		if err := binary.Write(buf, binary.BigEndian, challengeToken); err != nil {
-			return nil, err
-		}
-
-		if _, err := io.Copy(conn, buf); err != nil {
-			return nil, err
-		}
+	if err = writeQueryBasicStatRequestPacket(conn, opts.SessionID, challengeToken); err != nil {
+		return nil, err
 	}
-
-	response := response.BasicQuery{}
 
 	// Basic stat response packet
 	// https://wiki.vg/Query#Response_2
-	{
-		// Type - byte
-		{
-			v, err := r.ReadByte()
+	response, err := readQueryBasicStatResponsePacket(r, opts.SessionID)
 
-			if err != nil {
-				return nil, err
-			}
-
-			if v != 0x00 {
-				return nil, ErrUnexpectedResponse
-			}
-		}
-
-		// Session ID - int32
-		{
-			var sessionID int32
-
-			if err := binary.Read(r, binary.BigEndian, &sessionID); err != nil {
-				return nil, err
-			}
-
-			if sessionID != opts.SessionID {
-				return nil, ErrUnexpectedResponse
-			}
-		}
-
-		// MOTD - null-terminated string
-		{
-			data, err := r.ReadBytes(0x00)
-
-			if err != nil {
-				return nil, err
-			}
-
-			description, err := description.ParseFormatting(decodeASCII(data[:len(data)-1]))
-
-			if err != nil {
-				return nil, err
-			}
-
-			response.MOTD = *description
-		}
-
-		// Game Type - null-terminated string
-		{
-			data, err := r.ReadBytes(0x00)
-
-			if err != nil {
-				return nil, err
-			}
-
-			response.GameType = string(data[:len(data)-1])
-		}
-
-		// Map - null-terminated string
-		{
-			data, err := r.ReadBytes(0x00)
-
-			if err != nil {
-				return nil, err
-			}
-
-			response.Map = string(data[:len(data)-1])
-		}
-
-		// Online Players - null-terminated string
-		{
-			data, err := r.ReadBytes(0x00)
-
-			if err != nil {
-				return nil, err
-			}
-
-			onlinePlayers, err := strconv.ParseUint(string(data[:len(data)-1]), 10, 64)
-
-			if err != nil {
-				return nil, err
-			}
-
-			response.OnlinePlayers = onlinePlayers
-		}
-
-		// Max Players - null-terminated string
-		{
-			data, err := r.ReadBytes(0x00)
-
-			if err != nil {
-				return nil, err
-			}
-
-			maxPlayers, err := strconv.ParseUint(string(data[:len(data)-1]), 10, 64)
-
-			if err != nil {
-				return nil, err
-			}
-
-			response.MaxPlayers = maxPlayers
-		}
-
-		// Host Port - uint16
-		{
-			var hostPort uint16
-
-			if err := binary.Read(r, binary.LittleEndian, &hostPort); err != nil {
-				return nil, err
-			}
-
-			response.HostPort = hostPort
-		}
-
-		// Host IP - null-terminated string
-		{
-			data, err := r.ReadBytes(0x00)
-
-			if err != nil {
-				return nil, err
-			}
-
-			response.HostIP = string(data[:len(data)-1])
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	return &response, nil
+	return response, err
 }
 
 // FullQuery runs a query on the server and returns the full information
@@ -296,109 +94,333 @@ func FullQuery(host string, port uint16, options ...options.Query) (*response.Fu
 
 	// Handshake request packet
 	// https://wiki.vg/Query#Request
+	if err = writeQueryHandshakeRequestPacket(conn, opts.SessionID); err != nil {
+		return nil, err
+	}
+
+	// Handshake response packet
+	// https://wiki.vg/Query#Response
+	challengeToken, err := readQueryHandshakeResponsePacket(r, opts.SessionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Full stat request packet
+	// https://wiki.vg/Query#Request_3
+	if err = writeQueryFullStatRequestPacket(conn, opts.SessionID, challengeToken); err != nil {
+		return nil, err
+	}
+
+	// Full stat response packet
+	// https://wiki.vg/Query#Response_3
+	response, err := readQueryFullStatResponsePacket(r, opts.SessionID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, err
+}
+
+func writeQueryHandshakeRequestPacket(w io.Writer, sessionID int32) error {
+	buf := &bytes.Buffer{}
+
+	// Magic - uint16
+	if _, err := buf.Write(magic); err != nil {
+		return err
+	}
+
+	// Type - byte
+	if err := binary.Write(buf, binary.BigEndian, byte(0x09)); err != nil {
+		return err
+	}
+
+	// Session ID - int32
+	if err := binary.Write(buf, binary.BigEndian, sessionID&0x0F0F0F0F); err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(w, buf); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func readQueryHandshakeResponsePacket(r io.Reader, sessionID int32) (int32, error) {
+	// Type - byte
 	{
-		buf := &bytes.Buffer{}
+		var packetType byte
 
-		// Magic - uint16
-		if _, err := buf.Write(magic); err != nil {
-			return nil, err
+		if err := binary.Read(r, binary.BigEndian, &packetType); err != nil {
+			return 0, err
 		}
 
-		// Type - byte
-		if err := buf.WriteByte(0x09); err != nil {
-			return nil, err
+		if packetType != 0x09 {
+			return 0, fmt.Errorf("query: received unexpected packet type (expected=0x00, received=0x%02X)", packetType)
+		}
+	}
+
+	// Session ID - int32
+	{
+		var serverSessionID int32
+
+		if err := binary.Read(r, binary.BigEndian, &serverSessionID); err != nil {
+			return 0, err
 		}
 
-		// Session ID - int32
-		if err := binary.Write(buf, binary.BigEndian, opts.SessionID&0x0F0F0F0F); err != nil {
-			return nil, err
-		}
-
-		if _, err := io.Copy(conn, buf); err != nil {
-			return nil, err
+		if serverSessionID != sessionID {
+			return 0, fmt.Errorf("query: session ID mismatch (expected=%d, received=%d)", sessionID, serverSessionID)
 		}
 	}
 
 	var challengeToken int32
 
-	// Handshake response packet
-	// https://wiki.vg/Query#Response
+	// Challenge Token - null-terminated string
 	{
-		// Type - byte
-		{
-			v, err := r.ReadByte()
+		challengeTokenString, err := readNTString(r)
 
-			if err != nil {
-				return nil, err
-			}
-
-			if v != 0x09 {
-				return nil, ErrUnexpectedResponse
-			}
+		if err != nil {
+			return 0, err
 		}
 
-		// Session ID - int32
-		{
-			var sessionID int32
+		value, err := strconv.ParseInt(challengeTokenString, 10, 32)
 
-			if err := binary.Read(r, binary.BigEndian, &sessionID); err != nil {
-				return nil, err
-			}
-
-			if sessionID != opts.SessionID {
-				return nil, ErrUnexpectedResponse
-			}
+		if err != nil {
+			return 0, err
 		}
 
-		// Challenge Token - null-terminated string
-		{
-			data, err := r.ReadBytes(0x00)
+		challengeToken = int32(value)
+	}
 
-			if err != nil {
-				return nil, err
-			}
+	return challengeToken, nil
+}
 
-			v, err := strconv.ParseInt(string(data[:len(data)-1]), 10, 32)
+func writeQueryBasicStatRequestPacket(w io.Writer, sessionID int32, challengeToken int32) error {
+	buf := &bytes.Buffer{}
 
-			if err != nil {
-				return nil, err
-			}
+	// Magic - uint16
+	if _, err := buf.Write(magic); err != nil {
+		return err
+	}
 
-			challengeToken = int32(v)
+	// Type - byte
+	if err := binary.Write(buf, binary.BigEndian, byte(0x00)); err != nil {
+		return err
+	}
+
+	// Session ID - int32
+	if err := binary.Write(buf, binary.BigEndian, sessionID&0x0F0F0F0F); err != nil {
+		return err
+	}
+
+	// Challenge Token - int32
+	if err := binary.Write(buf, binary.BigEndian, challengeToken); err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(w, buf); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func writeQueryFullStatRequestPacket(w io.Writer, sessionID int32, challengeToken int32) error {
+	buf := &bytes.Buffer{}
+
+	// Magic - uint16
+	if _, err := buf.Write(magic); err != nil {
+		return err
+	}
+
+	// Type - byte
+	if err := binary.Write(buf, binary.BigEndian, byte(0x00)); err != nil {
+		return err
+	}
+
+	// Session ID - int32
+	if err := binary.Write(buf, binary.BigEndian, sessionID&0x0F0F0F0F); err != nil {
+		return err
+	}
+
+	// Challenge Token - int32
+	if err := binary.Write(buf, binary.BigEndian, challengeToken); err != nil {
+		return err
+	}
+
+	// Padding - [4]byte
+	if _, err := buf.Write([]byte{0x00, 0x00, 0x00, 0x00}); err != nil {
+		return err
+	}
+
+	if _, err := io.Copy(w, buf); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func readQueryBasicStatResponsePacket(r io.Reader, sessionID int32) (*response.BasicQuery, error) {
+	// Type - byte
+	{
+		var packetType byte
+
+		if err := binary.Read(r, binary.BigEndian, &packetType); err != nil {
+			return nil, err
+		}
+
+		if packetType != 0x00 {
+			return nil, fmt.Errorf("query: received unexpected packet type (expected=0x00, received=0x%02X)", packetType)
 		}
 	}
 
-	// Full stat request packet
-	// https://wiki.vg/Query#Request_2
+	// Session ID - int32
 	{
-		buf := &bytes.Buffer{}
+		var serverSessionID int32
 
-		// Magic - uint16
-		if _, err := buf.Write(magic); err != nil {
+		if err := binary.Read(r, binary.BigEndian, &serverSessionID); err != nil {
 			return nil, err
 		}
 
-		// Type - byte
-		if err := buf.WriteByte(0x00); err != nil {
+		if serverSessionID != sessionID {
+			return nil, fmt.Errorf("query: session ID mismatch (expected=%d, received=%d)", sessionID, serverSessionID)
+		}
+	}
+
+	var response response.BasicQuery
+
+	// MOTD - null-terminated string
+	{
+		rawMOTD, err := readNTString(r)
+
+		if err != nil {
 			return nil, err
 		}
 
-		// Session ID - int32
-		if err := binary.Write(buf, binary.BigEndian, opts.SessionID&0x0F0F0F0F); err != nil {
+		motd, err := description.ParseFormatting(rawMOTD)
+
+		if err != nil {
 			return nil, err
 		}
 
-		// Challenge Token - int32
-		if err := binary.Write(buf, binary.BigEndian, challengeToken); err != nil {
+		response.MOTD = *motd
+	}
+
+	// Game Type - null-terminated string
+	{
+		gameType, err := readNTString(r)
+
+		if err != nil {
 			return nil, err
 		}
 
-		// Padding - bytes
-		if _, err := buf.Write([]byte{0x00, 0x00, 0x00, 0x00}); err != nil {
+		response.GameType = gameType
+	}
+
+	// Map - null-terminated string
+	{
+		mapName, err := readNTString(r)
+
+		if err != nil {
 			return nil, err
 		}
 
-		if _, err := io.Copy(conn, buf); err != nil {
+		response.Map = mapName
+	}
+
+	// Online Players - null-terminated string
+	{
+		onlinePlayersString, err := readNTString(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		onlinePlayers, err := strconv.ParseUint(onlinePlayersString, 10, 64)
+
+		if err != nil {
+			return nil, err
+		}
+
+		response.OnlinePlayers = onlinePlayers
+	}
+
+	// Max Players - null-terminated string
+	{
+		maxPlayersString, err := readNTString(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		maxPlayers, err := strconv.ParseUint(maxPlayersString, 10, 64)
+
+		if err != nil {
+			return nil, err
+		}
+
+		response.MaxPlayers = maxPlayers
+	}
+
+	// Host Port - uint16
+	{
+		var hostPort uint16
+
+		if err := binary.Read(r, binary.LittleEndian, &hostPort); err != nil {
+			return nil, err
+		}
+
+		response.HostPort = hostPort
+	}
+
+	// Host IP - null-terminated string
+	{
+		hostIP, err := readNTString(r)
+
+		if err != nil {
+			return nil, err
+		}
+
+		response.HostIP = hostIP
+	}
+
+	return &response, nil
+}
+
+func readQueryFullStatResponsePacket(r io.Reader, sessionID int32) (*response.FullQuery, error) {
+	// Type - byte
+	{
+		var packetType byte
+
+		if err := binary.Read(r, binary.BigEndian, &packetType); err != nil {
+			return nil, err
+		}
+
+		if packetType != 0x00 {
+			return nil, fmt.Errorf("query: received unexpected packet type (expected=0x00, received=0x%02X)", packetType)
+		}
+	}
+
+	// Session ID - int16
+	{
+		var serverSessionID int32
+
+		if err := binary.Read(r, binary.BigEndian, &serverSessionID); err != nil {
+			return nil, err
+		}
+
+		if serverSessionID != sessionID {
+			return nil, fmt.Errorf("query: session ID mismatch (expected=%d, received=%d)", sessionID, serverSessionID)
+		}
+	}
+
+	// Padding - [11]byte
+	{
+		data := make([]byte, 11)
+
+		if _, err := r.Read(data); err != nil {
 			return nil, err
 		}
 	}
@@ -408,95 +430,52 @@ func FullQuery(host string, port uint16, options ...options.Query) (*response.Fu
 		Players: make([]string, 0),
 	}
 
-	// Full stat response packet
-	// https://wiki.vg/Query#Response_3
+	// K, V section - null-terminated key,pair pair string
 	{
-		// Type - byte
-		{
-			v, err := r.ReadByte()
+		for {
+			key, err := readNTString(r)
 
 			if err != nil {
 				return nil, err
 			}
 
-			if v != 0x00 {
-				return nil, ErrUnexpectedResponse
+			if len(key) < 1 {
+				break
 			}
-		}
 
-		// Session ID - int16
-		{
-			var sessionID int32
+			value, err := readNTString(r)
 
-			if err := binary.Read(r, binary.BigEndian, &sessionID); err != nil {
+			if err != nil {
 				return nil, err
 			}
 
-			if sessionID != opts.SessionID {
-				return nil, ErrUnexpectedResponse
-			}
+			response.Data[key] = value
 		}
+	}
 
-		// Padding - [11]byte
-		{
-			data := make([]byte, 11)
+	// Padding - [10]byte
+	{
+		data := make([]byte, 10)
 
-			if _, err := r.Read(data); err != nil {
+		if _, err := r.Read(data); err != nil {
+			return nil, err
+		}
+	}
+
+	// Players section - null-terminated key,value pair string
+	{
+		for {
+			username, err := readNTString(r)
+
+			if err != nil {
 				return nil, err
 			}
-		}
 
-		// K, V section - null-terminated key,pair pair string
-		{
-			for {
-				data, err := r.ReadBytes(0x00)
-
-				if err != nil {
-					return nil, err
-				}
-
-				if len(data) < 2 {
-					break
-				}
-
-				key := decodeASCII(data[:len(data)-1])
-
-				data, err = r.ReadBytes(0x00)
-
-				if err != nil {
-					return nil, err
-				}
-
-				value := decodeASCII(data[:len(data)-1])
-
-				response.Data[key] = value
+			if len(username) < 1 {
+				break
 			}
-		}
 
-		// Padding - [10]byte
-		{
-			data := make([]byte, 10)
-
-			if _, err := r.Read(data); err != nil {
-				return nil, err
-			}
-		}
-
-		// Players section - null-terminated key,value pair string
-		{
-			for {
-				data, err := r.ReadBytes(0x00)
-
-				if err != nil {
-					return nil, err
-				}
-
-				if len(data) < 2 {
-					break
-				}
-
-				response.Players = append(response.Players, string(data[:len(data)-1]))
-			}
+			response.Players = append(response.Players, username)
 		}
 	}
 
@@ -507,12 +486,13 @@ func parseQueryOptions(opts ...options.Query) options.Query {
 	if len(opts) < 1 {
 		options := options.Query(defaultQueryOptions)
 
-		sessionID++
-
-		options.SessionID = sessionID
+		options.SessionID = rand.Int31() & 0x0F0F0F0F
 
 		return options
 	}
 
-	return opts[0]
+	result := opts[0]
+	result.SessionID &= 0x0F0F0F0F
+
+	return result
 }

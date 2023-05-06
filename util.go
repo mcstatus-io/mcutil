@@ -13,16 +13,6 @@ var (
 	addressRegExp = regexp.MustCompile(`^([A-Za-z0-9.]+)(?::(\d{1,5}))?$`)
 )
 
-func decodeASCII(input []byte) string {
-	data := make([]rune, len(input))
-
-	for i, b := range input {
-		data[i] = rune(b)
-	}
-
-	return string(data)
-}
-
 func writePacket(data *bytes.Buffer, w io.Writer) error {
 	if _, err := writeVarInt(int32(data.Len()), w); err != nil {
 		return err
@@ -31,6 +21,30 @@ func writePacket(data *bytes.Buffer, w io.Writer) error {
 	_, err := io.Copy(w, data)
 
 	return err
+}
+
+func readNTString(r io.Reader) (string, error) {
+	result := make([]byte, 0)
+
+	for {
+		data := make([]byte, 1)
+
+		if _, err := r.Read(data); err != nil {
+			return "", err
+		}
+
+		if data[0] == 0x00 {
+			break
+		}
+
+		result = append(result, data...)
+	}
+
+	return string(result), nil
+}
+
+func pointerOf[T any](v T) *T {
+	return &v
 }
 
 // LookupSRV resolves any Minecraft SRV record from the DNS of the domain
@@ -53,7 +67,7 @@ func ParseAddress(address string, defaultPort uint16) (string, uint16, error) {
 	matches := addressRegExp.FindAllStringSubmatch(address, -1)
 
 	if matches == nil || len(matches) < 1 {
-		return "", defaultPort, fmt.Errorf("address \"%s\" does not match any known format", address)
+		return "", defaultPort, fmt.Errorf("address: cannot parse \"%s\"", address)
 	}
 
 	if len(matches[0]) < 3 || len(matches[0][2]) < 1 {

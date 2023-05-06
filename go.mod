@@ -1,3 +1,3 @@
 module github.com/mcstatus-io/mcutil
 
-go 1.17
+go 1.18

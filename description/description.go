@@ -37,7 +37,7 @@ func ParseFormatting(desc interface{}, defaultColor ...Color) (res *Formatting, 
 			break
 		}
 	default:
-		err = fmt.Errorf("unknown description type: %T", desc)
+		err = fmt.Errorf("description: unknown description type: %T", desc)
 	}
 
 	if err != nil {

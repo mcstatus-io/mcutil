@@ -1,7 +1,6 @@
 package mcutil
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"fmt"
@@ -20,8 +19,7 @@ var (
 
 // RCONClient is a client for interacting with RCON and contains multiple methods
 type RCONClient struct {
-	conn        *net.Conn
-	r           *bufio.Reader
+	conn        net.Conn
 	Messages    chan string
 	runTrigger  chan bool
 	authSuccess bool
@@ -32,7 +30,6 @@ type RCONClient struct {
 func NewRCON() *RCONClient {
 	return &RCONClient{
 		conn:        nil,
-		r:           nil,
 		Messages:    make(chan string),
 		runTrigger:  make(chan bool),
 		authSuccess: false,
@@ -44,7 +41,7 @@ func NewRCON() *RCONClient {
 func (r *RCONClient) Dial(host string, port uint16, options ...options.RCON) error {
 	opts := parseRCONOptions(options...)
 
-	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return err
@@ -54,8 +51,7 @@ func (r *RCONClient) Dial(host string, port uint16, options ...options.RCON) err
 		return err
 	}
 
-	r.conn = &conn
-	r.r = bufio.NewReader(conn)
+	r.conn = conn
 
 	return nil
 }
@@ -100,7 +96,7 @@ func (r *RCONClient) Login(password string) error {
 			return err
 		}
 
-		if _, err := io.Copy(*r.conn, buf); err != nil {
+		if _, err := io.Copy(r.conn, buf); err != nil {
 			return err
 		}
 	}
@@ -112,7 +108,7 @@ func (r *RCONClient) Login(password string) error {
 
 		// Length - int32
 		{
-			if err := binary.Read(r.r, binary.LittleEndian, &packetLength); err != nil {
+			if err := binary.Read(r.conn, binary.LittleEndian, &packetLength); err != nil {
 				return err
 			}
 		}
@@ -121,14 +117,14 @@ func (r *RCONClient) Login(password string) error {
 		{
 			var requestID int32
 
-			if err := binary.Read(r.r, binary.LittleEndian, &requestID); err != nil {
+			if err := binary.Read(r.conn, binary.LittleEndian, &requestID); err != nil {
 				return err
 			}
 
 			if requestID == -1 {
 				return ErrInvalidPassword
 			} else if requestID != 0 {
-				return ErrUnexpectedResponse
+				return fmt.Errorf("rcon: received unexpected request ID (expected=0, received=%d)", requestID)
 			}
 		}
 
@@ -136,12 +132,12 @@ func (r *RCONClient) Login(password string) error {
 		{
 			var packetType int32
 
-			if err := binary.Read(r.r, binary.LittleEndian, &packetType); err != nil {
+			if err := binary.Read(r.conn, binary.LittleEndian, &packetType); err != nil {
 				return err
 			}
 
-			if packetType != 2 {
-				return ErrUnexpectedResponse
+			if packetType != 0x02 {
+				return fmt.Errorf("rcon: received unexpected packet type (expected=0x02, received=0x%02X)", packetType)
 			}
 		}
 
@@ -149,7 +145,7 @@ func (r *RCONClient) Login(password string) error {
 		{
 			data := make([]byte, packetLength-8)
 
-			if _, err := (*r.r).Read(data); err != nil {
+			if _, err := r.conn.Read(data); err != nil {
 				return err
 			}
 		}
@@ -157,7 +153,7 @@ func (r *RCONClient) Login(password string) error {
 
 	r.authSuccess = true
 
-	if err := (*r.conn).SetReadDeadline(time.Time{}); err != nil {
+	if err := r.conn.SetReadDeadline(time.Time{}); err != nil {
 		return err
 	}
 
@@ -183,7 +179,7 @@ func (r *RCONClient) Run(command string) error {
 	}
 
 	if !r.authSuccess {
-		return ErrNotLoggedIn
+		return ErrNotAuthenticated
 	}
 
 	r.requestID++
@@ -217,7 +213,7 @@ func (r *RCONClient) Run(command string) error {
 			return err
 		}
 
-		if _, err := io.Copy(*r.conn, buf); err != nil {
+		if _, err := io.Copy(r.conn, buf); err != nil {
 			return err
 		}
 	}
@@ -231,7 +227,7 @@ func (r *RCONClient) Close() error {
 	r.requestID = 0
 
 	if r.conn != nil {
-		if err := (*r.conn).Close(); err != nil {
+		if err := r.conn.Close(); err != nil {
 			return err
 		}
 	}
@@ -252,7 +248,7 @@ func (r *RCONClient) readMessage() error {
 			// TODO convert to binary.Read() for the rest of the package
 			data := make([]byte, 4)
 
-			n, err := (*r.r).Read(data)
+			n, err := r.conn.Read(data)
 
 			if err != nil {
 				return err
@@ -269,7 +265,7 @@ func (r *RCONClient) readMessage() error {
 		{
 			data := make([]byte, 4)
 
-			n, err := (*r.r).Read(data)
+			n, err := r.conn.Read(data)
 
 			if err != nil {
 				return err
@@ -282,20 +278,14 @@ func (r *RCONClient) readMessage() error {
 
 		// Type - int32
 		{
-			data := make([]byte, 4)
+			var packetType int32
 
-			n, err := (*r.r).Read(data)
-
-			if err != nil {
+			if err := binary.Read(r.conn, binary.LittleEndian, &packetType); err != nil {
 				return err
 			}
 
-			if n < 4 {
-				return nil
-			}
-
-			if binary.LittleEndian.Uint32(data) != 0 {
-				return ErrUnexpectedResponse
+			if packetType != 2 {
+				return fmt.Errorf("rcon: received unexpected packet type (expected=0x00, received=0x%02X)", packetType)
 			}
 		}
 
@@ -303,7 +293,7 @@ func (r *RCONClient) readMessage() error {
 		{
 			data := make([]byte, packetLength-8)
 
-			n, err := (*r.r).Read(data)
+			n, err := r.conn.Read(data)
 
 			if err != nil {
 				return err

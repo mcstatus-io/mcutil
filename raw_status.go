@@ -1,7 +1,6 @@
 package mcutil
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
@@ -26,15 +25,13 @@ func StatusRaw(host string, port uint16, options ...options.JavaStatus) (map[str
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err
 	}
 
 	defer conn.Close()
-
-	r := bufio.NewReader(conn)
 
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err
@@ -97,27 +94,27 @@ func StatusRaw(host string, port uint16, options ...options.JavaStatus) (map[str
 	{
 		// Packet length - varint
 		{
-			if _, _, err := readVarInt(r); err != nil {
+			if _, _, err := readVarInt(conn); err != nil {
 				return nil, err
 			}
 		}
 
 		// Packet type - varint
 		{
-			packetType, _, err := readVarInt(r)
+			packetType, _, err := readVarInt(conn)
 
 			if err != nil {
 				return nil, err
 			}
 
 			if packetType != 0x00 {
-				return nil, ErrUnexpectedResponse
+				return nil, fmt.Errorf("status: received unexpected packet type (expected=0x00, received=0x%02X)", packetType)
 			}
 		}
 
 		// Data - string
 		{
-			data, err := readString(r)
+			data, err := readString(conn)
 
 			if err != nil {
 				return nil, err
@@ -156,21 +153,21 @@ func StatusRaw(host string, port uint16, options ...options.JavaStatus) (map[str
 	{
 		// Packet length - varint
 		{
-			if _, _, err := readVarInt(r); err != nil {
+			if _, _, err := readVarInt(conn); err != nil {
 				return nil, err
 			}
 		}
 
 		// Packet type - varint
 		{
-			packetType, _, err := readVarInt(r)
+			packetType, _, err := readVarInt(conn)
 
 			if err != nil {
 				return nil, err
 			}
 
 			if packetType != 0x01 {
-				return nil, ErrUnexpectedResponse
+				return nil, fmt.Errorf("status: received unexpected packet type (expected=0x01, received=0x%02X)", packetType)
 			}
 		}
 
@@ -178,12 +175,12 @@ func StatusRaw(host string, port uint16, options ...options.JavaStatus) (map[str
 		{
 			var returnPayload int64
 
-			if err := binary.Read(r, binary.BigEndian, &returnPayload); err != nil {
+			if err := binary.Read(conn, binary.BigEndian, &returnPayload); err != nil {
 				return nil, err
 			}
 
 			if payload != returnPayload {
-				return nil, ErrUnexpectedResponse
+				return nil, fmt.Errorf("status: received unexpected payload (expected=%X, received=%X)", payload, returnPayload)
 			}
 		}
 	}

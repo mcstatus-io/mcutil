@@ -1,6 +1,7 @@
 package mcutil
 
 import (
+	"errors"
 	"io"
 )
 
@@ -27,7 +28,7 @@ func readVarInt(r io.Reader) (int32, int, error) {
 		numRead++
 
 		if numRead > 5 {
-			return 0, numRead, ErrVarIntTooBig
+			return 0, numRead, errors.New("varint: attempted to read an oversized varint")
 		}
 
 		if (data[0] & 0b10000000) == 0 {

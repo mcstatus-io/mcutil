@@ -38,7 +38,7 @@ type voteResponse struct {
 
 // SendVote sends a Votifier vote to the specified Minecraft server
 func SendVote(host string, port uint16, opts options.Vote) error {
-	conn, err := net.DialTimeout("tcp4", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func SendVote(host string, port uint16, opts options.Vote) error {
 		split := strings.Split(string(data[:len(data)-1]), " ")
 
 		if split[1] != "2" {
-			return fmt.Errorf("unknown server Votifier version: %s", split[1])
+			return fmt.Errorf("vote: unknown server Votifier version: %s", split[1])
 		}
 
 		challenge = split[2]
@@ -149,7 +149,7 @@ func SendVote(host string, port uint16, opts options.Vote) error {
 			}
 		default:
 			{
-				return ErrUnexpectedResponse
+				return fmt.Errorf("vote: received unexpected server response (expected=ok, received=%s)", response.Status)
 			}
 		}
 	}

@@ -71,7 +71,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 		}
 
 		// Time - int64
-		if err := binary.Write(buf, binary.BigEndian, time.Now().UnixNano()/int64(time.Millisecond)); err != nil {
+		if err := binary.Write(buf, binary.BigEndian, time.Now().UnixMilli()); err != nil {
 			return nil, err
 		}
 
@@ -98,22 +98,22 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 	{
 		// Type - byte
 		{
-			v, err := r.ReadByte()
+			var packetType byte
 
-			if err != nil {
+			if err := binary.Read(r, binary.BigEndian, &packetType); err != nil {
 				return nil, err
 			}
 
-			if v != 0x1C {
-				return nil, ErrUnexpectedResponse
+			if packetType != 0x1C {
+				return nil, fmt.Errorf("rcon: received unexpected packet type (expected=0x1C, received=0x%02X)", packetType)
 			}
 		}
 
 		// Time - int64
 		{
-			data := make([]byte, 8)
+			var time int64
 
-			if _, err := r.Read(data); err != nil {
+			if err := binary.Read(r, binary.BigEndian, &time); err != nil {
 				return nil, err
 			}
 		}
@@ -172,27 +172,27 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 
 	var motd string
 
-	for k, v := range splitID {
-		if len(strings.Trim(v, " ")) < 1 {
+	for k, value := range splitID {
+		if len(strings.Trim(value, " ")) < 1 {
 			continue
 		}
 
 		switch k {
 		case 0:
 			{
-				response.Edition = &splitID[k]
+				response.Edition = &value
 
 				break
 			}
 		case 1:
 			{
-				motd = splitID[k]
+				motd = value
 
 				break
 			}
 		case 2:
 			{
-				protocolVersion, err := strconv.ParseInt(splitID[k], 10, 64)
+				protocolVersion, err := strconv.ParseInt(value, 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -204,13 +204,13 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 		case 3:
 			{
-				response.Version = &splitID[k]
+				response.Version = &value
 
 				break
 			}
 		case 4:
 			{
-				onlinePlayers, err := strconv.ParseInt(splitID[k], 10, 64)
+				onlinePlayers, err := strconv.ParseInt(value, 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -222,7 +222,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 		case 5:
 			{
-				maxPlayers, err := strconv.ParseInt(splitID[k], 10, 64)
+				maxPlayers, err := strconv.ParseInt(value, 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -234,25 +234,25 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 		case 6:
 			{
-				response.ServerID = &splitID[k]
+				response.ServerID = &value
 
 				break
 			}
 		case 7:
 			{
-				motd += "\n" + splitID[k]
+				motd += "\n" + value
 
 				break
 			}
 		case 8:
 			{
-				response.Gamemode = &splitID[k]
+				response.Gamemode = &value
 
 				break
 			}
 		case 9:
 			{
-				gamemodeID, err := strconv.ParseInt(splitID[k], 10, 64)
+				gamemodeID, err := strconv.ParseInt(value, 10, 64)
 
 				if err != nil {
 					return nil, err
@@ -264,29 +264,25 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 		case 10:
 			{
-				portIPv4, err := strconv.ParseInt(splitID[k], 10, 64)
+				portIPv4, err := strconv.ParseInt(value, 10, 64)
 
 				if err != nil {
 					return nil, err
 				}
 
-				convertedIPv4 := uint16(portIPv4)
-
-				response.PortIPv4 = &convertedIPv4
+				response.PortIPv4 = pointerOf(uint16(portIPv4))
 
 				break
 			}
 		case 11:
 			{
-				portIPv6, err := strconv.ParseInt(splitID[k], 10, 64)
+				portIPv6, err := strconv.ParseInt(value, 10, 64)
 
 				if err != nil {
 					return nil, err
 				}
 
-				convertedIPv6 := uint16(portIPv6)
-
-				response.PortIPv6 = &convertedIPv6
+				response.PortIPv6 = pointerOf(uint16(portIPv6))
 
 				break
 			}

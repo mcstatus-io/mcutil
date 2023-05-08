@@ -5,7 +5,7 @@ import (
 )
 
 func readString(r io.Reader) ([]byte, error) {
-	length, _, err := readVarInt(r)
+	length, err := readVarInt(r)
 
 	if err != nil {
 		return nil, err
@@ -21,7 +21,7 @@ func readString(r io.Reader) ([]byte, error) {
 }
 
 func writeString(val string, w io.Writer) error {
-	if _, err := writeVarInt(int32(len(val)), w); err != nil {
+	if err := writeVarInt(int32(len(val)), w); err != nil {
 		return err
 	}
 

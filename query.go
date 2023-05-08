@@ -17,8 +17,7 @@ import (
 )
 
 var (
-	sessionID           int32 = 0
-	defaultQueryOptions       = options.Query{
+	defaultQueryOptions = options.Query{
 		Timeout:   time.Second * 5,
 		SessionID: 0,
 	}

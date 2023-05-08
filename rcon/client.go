@@ -1,8 +1,9 @@
-package mcutil
+package rcon
 
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -12,13 +13,24 @@ import (
 )
 
 var (
-	defaultRCONOptions = options.RCON{
+	// ErrNotConnected means the client attempted to send data but there was no connection to the server
+	ErrNotConnected = errors.New("rcon: not connected to the server")
+	// ErrAlreadyLoggedIn means the RCON client was already logged in but a second login attempt was made
+	ErrAlreadyLoggedIn = errors.New("rcon: already successfully logged in")
+	// ErrInvalidPassword means the password used in the RCON login was incorrect
+	ErrInvalidPassword = errors.New("rcon: incorrect password")
+	// ErrNotAuthenticated means the client attempted to execute a command before a login was successful
+	ErrNotAuthenticated = errors.New("rcon: not authenticated with the server")
+)
+
+var (
+	defaultOptions = options.RCON{
 		Timeout: time.Second * 5,
 	}
 )
 
-// RCONClient is a client for interacting with RCON and contains multiple methods
-type RCONClient struct {
+// Client is a client for interacting with RCON and contains multiple methods
+type Client struct {
 	conn        net.Conn
 	Messages    chan string
 	runTrigger  chan bool
@@ -26,38 +38,27 @@ type RCONClient struct {
 	requestID   int32
 }
 
-// NewRCON creates a new RCON client from the options parameter
-func NewRCON() *RCONClient {
-	return &RCONClient{
-		conn:        nil,
-		Messages:    make(chan string),
-		runTrigger:  make(chan bool),
-		authSuccess: false,
-		requestID:   0,
-	}
-}
-
-// Dial creates a new connection to the server
-func (r *RCONClient) Dial(host string, port uint16, options ...options.RCON) error {
-	opts := parseRCONOptions(options...)
+// Connect connects to the server using the address provided and returns a new client
+func Connect(host string, port uint16, options ...options.RCON) (*Client, error) {
+	opts := parseOptions(options...)
 
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
-		return err
-	}
-
-	r.conn = conn
-
-	return nil
+	return &Client{
+		conn:        conn,
+		Messages:    make(chan string),
+		runTrigger:  make(chan bool),
+		authSuccess: false,
+		requestID:   0,
+	}, nil
 }
 
 // Login communicates authentication with the server using the plaintext password
-func (r *RCONClient) Login(password string) error {
+func (r *Client) Login(password string) error {
 	if r.conn == nil {
 		return ErrNotConnected
 	}
@@ -173,7 +174,7 @@ func (r *RCONClient) Login(password string) error {
 }
 
 // Run executes the command on the server but does not wait for a response
-func (r *RCONClient) Run(command string) error {
+func (r *Client) Run(command string) error {
 	if r.conn == nil {
 		return ErrNotConnected
 	}
@@ -222,7 +223,7 @@ func (r *RCONClient) Run(command string) error {
 }
 
 // Close closes the connection to the server
-func (r *RCONClient) Close() error {
+func (r *Client) Close() error {
 	r.authSuccess = false
 	r.requestID = 0
 
@@ -237,7 +238,7 @@ func (r *RCONClient) Close() error {
 	return nil
 }
 
-func (r *RCONClient) readMessage() error {
+func (r *Client) readMessage() error {
 	// Command response packet
 	// https://wiki.vg/RCON#0:_Command_response
 	{
@@ -310,9 +311,9 @@ func (r *RCONClient) readMessage() error {
 	return nil
 }
 
-func parseRCONOptions(opts ...options.RCON) options.RCON {
+func parseOptions(opts ...options.RCON) options.RCON {
 	if len(opts) < 1 {
-		return defaultRCONOptions
+		return defaultOptions
 	}
 
 	return opts[0]

@@ -1,60 +1,46 @@
 package mcutil
 
 import (
-	"errors"
+	"encoding/binary"
 	"io"
 )
 
-func readVarInt(r io.Reader) (int32, int, error) {
-	var numRead int = 0
-	var result int32 = 0
+func readVarInt(r io.Reader) (int32, error) {
+	var value int32 = 0
+	var position int = 0
+	var currentByte byte
 
 	for {
-		data := make([]byte, 1)
-
-		n, err := r.Read(data)
-
-		if err != nil {
-			return 0, numRead, err
+		if err := binary.Read(r, binary.BigEndian, &currentByte); err != nil {
+			return 0, err
 		}
 
-		if n < 1 {
-			return 0, numRead, io.EOF
-		}
+		value |= int32(currentByte&0x7F) << position
 
-		value := (data[0] & 0b01111111)
-		result |= int32(value) << (7 * numRead)
-
-		numRead++
-
-		if numRead > 5 {
-			return 0, numRead, errors.New("varint: attempted to read an oversized varint")
-		}
-
-		if (data[0] & 0b10000000) == 0 {
+		if currentByte&0x80 == 0 {
 			break
+		}
+
+		position += 7
+
+		if position >= 32 {
+			return 0, ErrVarIntTooBig
 		}
 	}
 
-	return result, numRead, nil
+	return value, nil
 }
 
-func writeVarInt(val int32, w io.Writer) (int, error) {
-	var numWritten int = 0
-
+func writeVarInt(val int32, w io.Writer) error {
 	for {
-		if (uint32(val) & 0xFFFFFF80) == 0 {
+		if (val & 0x80) == 0 {
 			_, err := w.Write([]byte{byte(val)})
 
-			numWritten++
-
-			return numWritten, err
+			return err
 		}
 
-		_, err := w.Write([]byte{byte(val&0x7F | 0x80)})
-
-		if err != nil {
-			return numWritten, err
+		if _, err := w.Write([]byte{byte((val & 0x7F) | 0x80)}); err != nil {
+			return err
 		}
 
 		val = int32(uint32(val) >> 7)

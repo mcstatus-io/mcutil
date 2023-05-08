@@ -13,8 +13,8 @@ var (
 	addressRegExp = regexp.MustCompile(`^([A-Za-z0-9.]+)(?::(\d{1,5}))?$`)
 )
 
-func writePacket(data *bytes.Buffer, w io.Writer) error {
-	if _, err := writeVarInt(int32(data.Len()), w); err != nil {
+func writePacket(w io.Writer, data *bytes.Buffer) error {
+	if err := writeVarInt(int32(data.Len()), w); err != nil {
 		return err
 	}
 

@@ -1,9 +1,6 @@
 package mcutil
 
 import (
-	"bytes"
-	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"net"
@@ -37,152 +34,28 @@ func StatusRaw(host string, port uint16, options ...options.JavaStatus) (map[str
 		return nil, err
 	}
 
-	// Handshake packet
-	// https://wiki.vg/Server_List_Ping#Handshake
-	{
-		buf := &bytes.Buffer{}
-
-		// Packet ID - varint
-		if _, err := writeVarInt(0x00, buf); err != nil {
-			return nil, err
-		}
-
-		// Protocol version - varint
-		if _, err = writeVarInt(int32(opts.ProtocolVersion), buf); err != nil {
-			return nil, err
-		}
-
-		// Host - string
-		if err := writeString(host, buf); err != nil {
-			return nil, err
-		}
-
-		// Port - uint16
-		if err := binary.Write(buf, binary.BigEndian, port); err != nil {
-			return nil, err
-		}
-
-		// Next state - varint
-		if _, err := writeVarInt(1, buf); err != nil {
-			return nil, err
-		}
-
-		if err := writePacket(buf, conn); err != nil {
-			return nil, err
-		}
+	if err = writeJavaStatusHandshakeRequestPacket(conn, int32(opts.ProtocolVersion), host, port); err != nil {
+		return nil, err
 	}
 
-	// Request packet
-	// https://wiki.vg/Server_List_Ping#Request
-	{
-		buf := &bytes.Buffer{}
-
-		// Packet ID - varint
-		if _, err := writeVarInt(0x00, buf); err != nil {
-			return nil, err
-		}
-
-		if err := writePacket(buf, conn); err != nil {
-			return nil, err
-		}
+	if err = writeJavaStatusStatusRequestPacket(conn); err != nil {
+		return nil, err
 	}
 
 	result := make(map[string]interface{})
 
-	// Response packet
-	// https://wiki.vg/Server_List_Ping#Response
-	{
-		// Packet length - varint
-		{
-			if _, _, err := readVarInt(conn); err != nil {
-				return nil, err
-			}
-		}
-
-		// Packet type - varint
-		{
-			packetType, _, err := readVarInt(conn)
-
-			if err != nil {
-				return nil, err
-			}
-
-			if packetType != 0x00 {
-				return nil, fmt.Errorf("status: received unexpected packet type (expected=0x00, received=0x%02X)", packetType)
-			}
-		}
-
-		// Data - string
-		{
-			data, err := readString(conn)
-
-			if err != nil {
-				return nil, err
-			}
-
-			if err = json.Unmarshal(data, &result); err != nil {
-				return nil, err
-			}
-		}
+	if err = readJavaStatusStatusResponsePacket(conn, &result); err != nil {
+		return nil, err
 	}
 
 	payload := rand.Int63()
 
-	// Ping packet
-	// https://wiki.vg/Server_List_Ping#Ping
-	{
-		buf := &bytes.Buffer{}
-
-		// Packet ID - varint
-		if _, err := writeVarInt(0x01, buf); err != nil {
-			return nil, err
-		}
-
-		// Payload - int64
-		if err := binary.Write(buf, binary.BigEndian, payload); err != nil {
-			return nil, err
-		}
-
-		if err := writePacket(buf, conn); err != nil {
-			return nil, err
-		}
+	if err = writeJavaStatusPingPacket(conn, payload); err != nil {
+		return nil, err
 	}
 
-	// Pong packet
-	// https://wiki.vg/Server_List_Ping#Pong
-	{
-		// Packet length - varint
-		{
-			if _, _, err := readVarInt(conn); err != nil {
-				return nil, err
-			}
-		}
-
-		// Packet type - varint
-		{
-			packetType, _, err := readVarInt(conn)
-
-			if err != nil {
-				return nil, err
-			}
-
-			if packetType != 0x01 {
-				return nil, fmt.Errorf("status: received unexpected packet type (expected=0x01, received=0x%02X)", packetType)
-			}
-		}
-
-		// Payload - int64
-		{
-			var returnPayload int64
-
-			if err := binary.Read(conn, binary.BigEndian, &returnPayload); err != nil {
-				return nil, err
-			}
-
-			if payload != returnPayload {
-				return nil, fmt.Errorf("status: received unexpected payload (expected=%X, received=%X)", payload, returnPayload)
-			}
-		}
+	if err = readJavaStatusPongPacket(conn, payload); err != nil {
+		return nil, err
 	}
 
 	return result, nil

@@ -48,8 +48,8 @@ func pointerOf[T any](v T) *T {
 }
 
 // LookupSRV resolves any Minecraft SRV record from the DNS of the domain
-func LookupSRV(host string, port uint16) (*net.SRV, error) {
-	_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
+func LookupSRV(protocol, host string, port uint16) (*net.SRV, error) {
+	_, addrs, err := net.LookupSRV("minecraft", protocol, host)
 
 	if err != nil {
 		return nil, err

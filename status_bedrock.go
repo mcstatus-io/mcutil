@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"strconv"
 	"strings"
@@ -33,7 +34,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 	var srvResult *response.SRVRecord = nil
 
 	if opts.EnableSRV && port == 19132 {
-		record, err := LookupSRV(host, port)
+		record, err := LookupSRV("udp", host, port)
 
 		if err == nil && record != nil {
 			host = record.Target
@@ -105,7 +106,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 
 			if packetType != 0x1C {
-				return nil, fmt.Errorf("rcon: received unexpected packet type (expected=0x1C, received=0x%02X)", packetType)
+				return nil, fmt.Errorf("statusbedrock: received unexpected packet type (expected=0x1C, received=0x%02X)", packetType)
 			}
 		}
 
@@ -306,7 +307,7 @@ func parseBedrockStatusOptions(opts ...options.BedrockStatus) options.BedrockSta
 	if len(opts) < 1 {
 		options := options.BedrockStatus(defaultBedrockStatusOptions)
 
-		options.ClientGUID = 2
+		options.ClientGUID = rand.Int63()
 
 		return options
 	}

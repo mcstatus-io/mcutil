@@ -13,6 +13,10 @@ var (
 	addressRegExp = regexp.MustCompile(`^([A-Za-z0-9.]+)(?::(\d{1,5}))?$`)
 )
 
+func pointerOf[T any](v T) *T {
+	return &v
+}
+
 func writePacket(w io.Writer, data *bytes.Buffer) error {
 	if err := writeVarInt(int32(data.Len()), w); err != nil {
 		return err
@@ -41,10 +45,6 @@ func readNTString(r io.Reader) (string, error) {
 	}
 
 	return string(result), nil
-}
-
-func pointerOf[T any](v T) *T {
-	return &v
 }
 
 // LookupSRV resolves any Minecraft SRV record from the DNS of the domain

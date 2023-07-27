@@ -153,7 +153,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 		}
 	}
 
-	response := &response.BedrockStatus{
+	response := response.BedrockStatus{
 		ServerGUID:      serverGUID,
 		Edition:         nil,
 		MOTD:            nil,
@@ -181,7 +181,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 		switch k {
 		case 0:
 			{
-				response.Edition = &value
+				response.Edition = pointerOf(value)
 
 				break
 			}
@@ -205,8 +205,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 		case 3:
 			{
-				versionValue := value
-				response.Version = &versionValue
+				response.Version = pointerOf(value)
 
 				break
 			}
@@ -236,8 +235,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 		case 6:
 			{
-				serverIDValue := value
-				response.ServerID = &serverIDValue
+				response.ServerID = pointerOf(value)
 
 				break
 			}
@@ -249,8 +247,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 			}
 		case 8:
 			{
-				gamemodeValue := value
-				response.Gamemode = &gamemodeValue
+				response.Gamemode = pointerOf(value)
 
 				break
 			}
@@ -287,8 +284,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 					return nil, err
 				}
 
-				portIPv6Value := uint16(portIPv6)
-				response.PortIPv6 = &portIPv6Value
+				response.PortIPv6 = pointerOf(uint16(portIPv6))
 
 				break
 			}
@@ -305,7 +301,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 		response.MOTD = parsedMOTD
 	}
 
-	return response, nil
+	return &response, nil
 }
 
 func parseBedrockStatusOptions(opts ...options.BedrockStatus) options.BedrockStatus {

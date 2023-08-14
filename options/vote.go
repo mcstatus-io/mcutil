@@ -11,3 +11,13 @@ type Vote struct {
 	Timestamp   time.Time
 	Timeout     time.Duration
 }
+
+// LegacyVote is the options used by the SendLegacyVote() function
+type LegacyVote struct {
+	PublicKey   string
+	ServiceName string
+	Username    string
+	IPAddress   string
+	Timestamp   time.Time
+	Timeout     time.Duration
+}

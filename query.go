@@ -13,9 +13,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/formatting"
-	"github.com/mcstatus-io/mcutil/options"
-	"github.com/mcstatus-io/mcutil/response"
+	"github.com/mcstatus-io/mcutil/v2/formatting"
+	"github.com/mcstatus-io/mcutil/v2/options"
+	"github.com/mcstatus-io/mcutil/v2/response"
 )
 
 var (

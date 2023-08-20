@@ -9,7 +9,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/options"
+	"github.com/mcstatus-io/mcutil/v2/options"
 )
 
 var (

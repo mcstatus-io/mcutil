@@ -3,7 +3,7 @@ package response
 import (
 	"time"
 
-	"github.com/mcstatus-io/mcutil/formatting"
+	"github.com/mcstatus-io/mcutil/v2/formatting"
 )
 
 type JavaStatus struct {

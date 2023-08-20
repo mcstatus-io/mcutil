@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mcstatus-io/mcutil/formatting/colors"
-	"github.com/mcstatus-io/mcutil/formatting/decorators"
+	"github.com/mcstatus-io/mcutil/v2/formatting/colors"
+	"github.com/mcstatus-io/mcutil/v2/formatting/decorators"
 )
 
 // Result is a parsed structure of any Minecraft string encoded with color codes or format codes

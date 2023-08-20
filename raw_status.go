@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/options"
+	"github.com/mcstatus-io/mcutil/v2/options"
 )
 
 // StatusRaw returns the raw status data of any 1.7+ Minecraft server

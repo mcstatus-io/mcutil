@@ -3,7 +3,7 @@ package options
 import (
 	"time"
 
-	"github.com/mcstatus-io/mcutil/formatting/colors"
+	"github.com/mcstatus-io/mcutil/v2/formatting/colors"
 )
 
 // JavaStatus is the options used by the Status() function

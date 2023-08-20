@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/options"
+	"github.com/mcstatus-io/mcutil/v2/options"
 )
 
 // SendLegacyVote sends a legacy Votifier vote to the specified Minecraft server

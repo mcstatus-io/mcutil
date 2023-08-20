@@ -22,16 +22,26 @@ https://pkg.go.dev/github.com/mcstatus-io/mcutil
 Retrieves the status of the Java Edition Minecraft server. This method only works on netty servers, which is version 1.7 and above. An attempt to use on pre-netty servers will result in an error.
 
 ```go
-import "github.com/mcstatus-io/mcutil"
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/mcstatus-io/mcutil"
+)
 
 func main() {
-    response, err := mcutil.Status("play.hypixel.net", 25565)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-    if err != nil {
-        panic(err)
-    }
+	defer cancel()
 
-    fmt.Println(response)
+	response, err := mcutil.Status(ctx, "play.hypixel.net", 25565)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(response)
 }
 ```
 
@@ -40,16 +50,26 @@ func main() {
 Retrieves the status of the Java Edition Minecraft server. This is a legacy method that is supported by all servers, but only retrieves basic information. If you know the server is running version 1.7 or above, please use `Status()` instead.
 
 ```go
-import "github.com/mcstatus-io/mcutil"
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/mcstatus-io/mcutil"
+)
 
 func main() {
-    response, err := mcutil.StatusLegacy("play.hypixel.net", 25565)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-    if err != nil {
-        panic(err)
-    }
+	defer cancel()
 
-    fmt.Println(response)
+	response, err := mcutil.StatusLegacy(ctx, "play.hypixel.net", 25565)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(response)
 }
 ```
 
@@ -58,16 +78,26 @@ func main() {
 Retrieves the status of the Bedrock Edition Minecraft server.
 
 ```go
-import "github.com/mcstatus-io/mcutil"
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/mcstatus-io/mcutil"
+)
 
 func main() {
-    response, err := mcutil.StatusBedrock("127.0.0.1", 19132)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-    if err != nil {
-        panic(err)
-    }
+	defer cancel()
 
-    fmt.Println(response)
+	response, err := mcutil.StatusBedrock(ctx, "127.0.0.1", 19132)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(response)
 }
 ```
 
@@ -76,17 +106,30 @@ func main() {
 Performs a basic query lookup on the server, retrieving most information about the server. Note that the server must explicitly enable query for this functionality to work.
 
 ```go
-import "github.com/mcstatus-io/mcutil"
+package a
+
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/mcstatus-io/mcutil"
+)
 
 func main() {
-    response, err := mcutil.BasicQuery("play.hypixel.net", 25565)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-    if err != nil {
-        panic(err)
-    }
+	defer cancel()
 
-    fmt.Println(response)
+	response, err := mcutil.BasicQuery(ctx, "play.hypixel.net", 25565)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(response)
 }
+
 ```
 
 ### Full Query
@@ -94,16 +137,26 @@ func main() {
 Performs a full query lookup on the server, retrieving all available information. Note that the server must explicitly enable query for this functionality to work.
 
 ```go
-import "github.com/mcstatus-io/mcutil"
+import (
+	"context"
+	"fmt"
+	"time"
+
+	"github.com/mcstatus-io/mcutil"
+)
 
 func main() {
-    response, err := mcutil.FullQuery("play.hypixel.net", 25565)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-    if err != nil {
-        panic(err)
-    }
+	defer cancel()
 
-    fmt.Println(response)
+	response, err := mcutil.FullQuery(ctx, "play.hypixel.net", 25565)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(response)
 }
 ```
 
@@ -143,23 +196,30 @@ Sends a Votifier vote to the specified server, typically used by server listing 
 
 ```go
 import (
-    "github.com/mcstatus-io/mcutil"
-    "github.com/mcstatus-io/mcutil/options"
+	"context"
+	"time"
+
+	"github.com/mcstatus-io/mcutil"
+	"github.com/mcstatus-io/mcutil/options"
 )
 
 func main() {
-    err := mcutil.SendVote("127.0.0.1", 8192, options.Vote{
-        ServiceName: "my-service",
-        Username:    "PassTheMayo",
-        Token:       "abc123", // server's Votifier token
-        UUID:        "",       // recommended but not required, UUID with dashes
-        Timestamp:   time.Now(),
-        Timeout:     time.Second * 5,
-    })
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-    if err != nil {
-        panic(err)
-    }
+	defer cancel()
+
+	err := mcutil.SendVote(ctx, "127.0.0.1", 8192, options.Vote{
+		ServiceName: "my-service",
+		Username:    "PassTheMayo",
+		Token:       "abc123", // server's Votifier token
+		UUID:        "",       // recommended but not required, UUID with dashes
+		Timestamp:   time.Now(),
+		Timeout:     time.Second * 5,
+	})
+
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 
@@ -169,23 +229,30 @@ Sends a legacy Votifier vote to the specified server, typically used by server l
 
 ```go
 import (
-    "github.com/mcstatus-io/mcutil"
-    "github.com/mcstatus-io/mcutil/options"
+	"context"
+	"time"
+
+	"github.com/mcstatus-io/mcutil"
+	"github.com/mcstatus-io/mcutil/options"
 )
 
 func main() {
-    err := mcutil.SendLegacyVote("127.0.0.1", 8192, options.LegacyVote{
-        PublicKey:   "...", // the contents of the 'plugins/<Votifier>/rsa/public.key' file on the server
-        ServiceName: "my-service",
-        Username:    "PassTheMayo",
-        IPAddress:   "127.0.0.1",
-        Timestamp:   time.Now(),
-        Timeout:     time.Second * 5,
-    })
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-    if err != nil {
-        panic(err)
-    }
+	defer cancel()
+
+	err := mcutil.SendLegacyVote(ctx, "127.0.0.1", 8192, options.LegacyVote{
+		PublicKey:   "...", // the contents of the 'plugins/<Votifier>/rsa/public.key' file on the server
+		ServiceName: "my-service",
+		Username:    "PassTheMayo",
+		IPAddress:   "127.0.0.1",
+		Timestamp:   time.Now(),
+		Timeout:     time.Second * 5,
+	})
+
+	if err != nil {
+		panic(err)
+	}
 }
 ```
 

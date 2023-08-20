@@ -3,7 +3,9 @@ package mcutil
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -12,7 +14,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/description"
+	"github.com/mcstatus-io/mcutil/formatting"
+	"github.com/mcstatus-io/mcutil/formatting/colors"
 	"github.com/mcstatus-io/mcutil/options"
 	"github.com/mcstatus-io/mcutil/response"
 )
@@ -22,13 +25,41 @@ var (
 		EnableSRV:        true,
 		Timeout:          time.Second * 5,
 		ClientGUID:       0,
-		DefaultMOTDColor: description.White,
+		DefaultMOTDColor: colors.White,
 	}
 	bedrockMagic = []byte{0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78}
 )
 
 // StatusBedrock retrieves the status of a Bedrock Minecraft server
-func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (*response.BedrockStatus, error) {
+func StatusBedrock(ctx context.Context, host string, port uint16, options ...options.BedrockStatus) (*response.BedrockStatus, error) {
+	r := make(chan *response.BedrockStatus, 1)
+	e := make(chan error, 1)
+
+	go func() {
+		result, err := getStatusBedrock(host, port, options...)
+
+		if err != nil {
+			e <- err
+		} else if result != nil {
+			r <- result
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		if v := ctx.Err(); v != nil {
+			return nil, v
+		}
+
+		return nil, errors.New("context finished before server sent response")
+	case v := <-r:
+		return v, nil
+	case v := <-e:
+		return nil, v
+	}
+}
+
+func getStatusBedrock(host string, port uint16, options ...options.BedrockStatus) (*response.BedrockStatus, error) {
 	opts := parseBedrockStatusOptions(options...)
 
 	var srvResult *response.SRVRecord = nil
@@ -292,7 +323,7 @@ func StatusBedrock(host string, port uint16, options ...options.BedrockStatus) (
 	}
 
 	if len(motd) > 0 {
-		parsedMOTD, err := description.ParseFormatting(motd, opts.DefaultMOTDColor)
+		parsedMOTD, err := formatting.Parse(motd, opts.DefaultMOTDColor)
 
 		if err != nil {
 			return nil, err

@@ -1,7 +1,9 @@
 package mcutil
 
 import (
+	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -9,7 +11,8 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/mcstatus-io/mcutil/description"
+	"github.com/mcstatus-io/mcutil/formatting"
+	"github.com/mcstatus-io/mcutil/formatting/colors"
 	"github.com/mcstatus-io/mcutil/options"
 	"github.com/mcstatus-io/mcutil/response"
 )
@@ -18,12 +21,40 @@ var (
 	defaultJavaStatusLegacyOptions = options.JavaStatusLegacy{
 		EnableSRV:        true,
 		Timeout:          time.Second * 5,
-		DefaultMOTDColor: description.White,
+		DefaultMOTDColor: colors.White,
 	}
 )
 
 // StatusLegacy retrieves the status of any Java Edition Minecraft server, but with reduced properties compared to Status()
-func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
+func StatusLegacy(ctx context.Context, host string, port uint16, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
+	r := make(chan *response.JavaStatusLegacy, 1)
+	e := make(chan error, 1)
+
+	go func() {
+		result, err := getStatusLegacy(host, port, options...)
+
+		if err != nil {
+			e <- err
+		} else if result != nil {
+			r <- result
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		if v := ctx.Err(); v != nil {
+			return nil, v
+		}
+
+		return nil, errors.New("context finished before server sent response")
+	case v := <-r:
+		return v, nil
+	case v := <-e:
+		return nil, v
+	}
+}
+
+func getStatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
 	opts := parseJavaStatusLegacyOptions(options...)
 
 	var srvResult *response.SRVRecord = nil
@@ -121,13 +152,13 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 				return nil, err
 			}
 
-			versionTree, err := description.ParseFormatting(split[2])
+			versionTree, err := formatting.Parse(split[2])
 
 			if err != nil {
 				return nil, err
 			}
 
-			motd, err := description.ParseFormatting(split[3], opts.DefaultMOTDColor)
+			motd, err := formatting.Parse(split[3], opts.DefaultMOTDColor)
 
 			if err != nil {
 				return nil, err
@@ -169,7 +200,7 @@ func StatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy)
 			return nil, fmt.Errorf("status: not enough information received (expected=3, received=%d)", len(split))
 		}
 
-		motd, err := description.ParseFormatting(split[0], opts.DefaultMOTDColor)
+		motd, err := formatting.Parse(split[0], opts.DefaultMOTDColor)
 
 		if err != nil {
 			return nil, err

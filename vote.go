@@ -3,11 +3,13 @@ package mcutil
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -37,7 +39,26 @@ type voteResponse struct {
 }
 
 // SendVote sends a Votifier vote to the specified Minecraft server
-func SendVote(host string, port uint16, opts options.Vote) error {
+func SendVote(ctx context.Context, host string, port uint16, opts options.Vote) error {
+	e := make(chan error, 1)
+
+	go func() {
+		e <- sendVote(host, port, opts)
+	}()
+
+	select {
+	case <-ctx.Done():
+		if v := ctx.Err(); v != nil {
+			return v
+		}
+
+		return errors.New("context finished before server sent response")
+	case v := <-e:
+		return v
+	}
+}
+
+func sendVote(host string, port uint16, opts options.Vote) error {
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {

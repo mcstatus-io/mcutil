@@ -1,4 +1,4 @@
-package description
+package colors
 
 // Color is a Minecraft color code type
 type Color rune
@@ -40,42 +40,42 @@ var (
 	MinecoinGold Color = 'g'
 )
 
-// ParseColor attempts to return a Color type based on a color code string, color name string, or a Color type itself
-func ParseColor(value interface{}) Color {
+// Parse attempts to return a Color type based on a color code string, color name string, or a Color type itself
+func Parse(value interface{}) Color {
 	switch value {
-	case "0", "black", Black:
+	case '0', "0", "black", Black:
 		return Black
-	case "1", "dark_blue", DarkBlue:
+	case '1', "1", "dark_blue", DarkBlue:
 		return DarkBlue
-	case "2", "dark_green", DarkGreen:
+	case '2', "2", "dark_green", DarkGreen:
 		return DarkGreen
-	case "3", "dark_aqua", DarkAqua:
+	case '3', "3", "dark_aqua", DarkAqua:
 		return DarkAqua
-	case "4", "dark_red", DarkRed:
+	case '4', "4", "dark_red", DarkRed:
 		return DarkRed
-	case "5", "dark_purple", DarkPurple:
+	case '5', "5", "dark_purple", DarkPurple:
 		return DarkPurple
-	case "6", "gold", Gold:
+	case '6', "6", "gold", Gold:
 		return Gold
-	case "7", "gray", Gray:
+	case '7', "7", "gray", Gray:
 		return Gray
-	case "8", "dark_gray", DarkGray:
+	case '8', "8", "dark_gray", DarkGray:
 		return DarkGray
-	case "9", "blue", Blue:
+	case '9', "9", "blue", Blue:
 		return Blue
-	case "a", "green", Green:
+	case 'a', "a", "green", Green:
 		return Green
-	case "b", "aqua", Aqua:
+	case 'b', "b", "aqua", Aqua:
 		return Aqua
-	case "c", "red", Red:
+	case 'c', "c", "red", Red:
 		return Red
-	case "d", "light_purple", LightPurple:
+	case 'd', "d", "light_purple", LightPurple:
 		return LightPurple
-	case "e", "yellow", Yellow:
+	case 'e', "e", "yellow", Yellow:
 		return Yellow
-	case "f", "white", White:
+	case 'f', "f", "white", White:
 		return White
-	case "g", "minecoin_gold", MinecoinGold:
+	case 'g', "g", "minecoin_gold", MinecoinGold:
 		return MinecoinGold
 	default:
 		return White

@@ -2,15 +2,18 @@ package mcutil
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/rand"
 	"net"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/description"
+	"github.com/mcstatus-io/mcutil/formatting"
+	"github.com/mcstatus-io/mcutil/formatting/colors"
 	"github.com/mcstatus-io/mcutil/options"
 	"github.com/mcstatus-io/mcutil/response"
 )
@@ -20,7 +23,7 @@ var (
 		EnableSRV:        true,
 		Timeout:          time.Second * 5,
 		ProtocolVersion:  47,
-		DefaultMOTDColor: description.White,
+		DefaultMOTDColor: colors.White,
 	}
 )
 
@@ -61,7 +64,35 @@ type rawJavaStatus struct {
 }
 
 // Status retrieves the status of any 1.7+ Minecraft server
-func Status(host string, port uint16, options ...options.JavaStatus) (*response.JavaStatus, error) {
+func Status(ctx context.Context, host string, port uint16, options ...options.JavaStatus) (*response.JavaStatus, error) {
+	r := make(chan *response.JavaStatus, 1)
+	e := make(chan error, 1)
+
+	go func() {
+		result, err := getStatus(host, port, options...)
+
+		if err != nil {
+			e <- err
+		} else if result != nil {
+			r <- result
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		if v := ctx.Err(); v != nil {
+			return nil, v
+		}
+
+		return nil, errors.New("context finished before server sent response")
+	case v := <-r:
+		return v, nil
+	case v := <-e:
+		return nil, v
+	}
+}
+
+func getStatus(host string, port uint16, options ...options.JavaStatus) (*response.JavaStatus, error) {
 	opts := parseJavaStatusOptions(options...)
 
 	var srvRecord *response.SRVRecord = nil
@@ -269,7 +300,7 @@ func readJavaStatusPongPacket(r io.Reader, payload int64) error {
 }
 
 func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration, opts options.JavaStatus) (*response.JavaStatus, error) {
-	motd, err := description.ParseFormatting(serverResponse.Description, opts.DefaultMOTDColor)
+	motd, err := formatting.Parse(serverResponse.Description, opts.DefaultMOTDColor)
 
 	if err != nil {
 		return nil, err
@@ -279,7 +310,7 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 
 	if serverResponse.Players.Sample != nil {
 		for _, player := range serverResponse.Players.Sample {
-			name, err := description.ParseFormatting(player.Name)
+			name, err := formatting.Parse(player.Name)
 
 			if err != nil {
 				return nil, err
@@ -294,7 +325,7 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 		}
 	}
 
-	version, err := description.ParseFormatting(serverResponse.Version.Name)
+	version, err := formatting.Parse(serverResponse.Version.Name)
 
 	if err != nil {
 		return nil, err

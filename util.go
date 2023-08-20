@@ -9,6 +9,11 @@ import (
 	"strconv"
 )
 
+const (
+	DefaultJavaPort    = 25565
+	DefaultBedrockPort = 19132
+)
+
 var (
 	addressRegExp = regexp.MustCompile(`^([A-Za-z0-9.]+)(?::(\d{1,5}))?$`)
 )

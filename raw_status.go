@@ -1,6 +1,8 @@
 package mcutil
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -10,7 +12,35 @@ import (
 )
 
 // StatusRaw returns the raw status data of any 1.7+ Minecraft server
-func StatusRaw(host string, port uint16, options ...options.JavaStatus) (map[string]interface{}, error) {
+func StatusRaw(ctx context.Context, host string, port uint16, options ...options.JavaStatus) (map[string]interface{}, error) {
+	r := make(chan map[string]interface{}, 1)
+	e := make(chan error, 1)
+
+	go func() {
+		result, err := getStatusRaw(host, port, options...)
+
+		if err != nil {
+			e <- err
+		} else if result != nil {
+			r <- result
+		}
+	}()
+
+	select {
+	case <-ctx.Done():
+		if v := ctx.Err(); v != nil {
+			return nil, v
+		}
+
+		return nil, errors.New("context finished before server sent response")
+	case v := <-r:
+		return v, nil
+	case v := <-e:
+		return nil, v
+	}
+}
+
+func getStatusRaw(host string, port uint16, options ...options.JavaStatus) (map[string]interface{}, error) {
 	opts := parseJavaStatusOptions(options...)
 
 	if opts.EnableSRV && port == 25565 {

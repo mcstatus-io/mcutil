@@ -3,17 +3,17 @@ package response
 import (
 	"time"
 
-	"github.com/mcstatus-io/mcutil/description"
+	"github.com/mcstatus-io/mcutil/formatting"
 )
 
 type JavaStatus struct {
-	Version   Version                `json:"version"`
-	Players   Players                `json:"players"`
-	MOTD      description.Formatting `json:"motd"`
-	Favicon   *string                `json:"favicon"`
-	SRVResult *SRVRecord             `json:"srv_result"`
-	ModInfo   *ModInfo               `json:"mod_info"`
-	Latency   time.Duration          `json:"-"`
+	Version   Version           `json:"version"`
+	Players   Players           `json:"players"`
+	MOTD      formatting.Result `json:"motd"`
+	Favicon   *string           `json:"favicon"`
+	SRVResult *SRVRecord        `json:"srv_result"`
+	ModInfo   *ModInfo          `json:"mod_info"`
+	Latency   time.Duration     `json:"-"`
 }
 
 type Players struct {
@@ -47,10 +47,10 @@ type Version struct {
 }
 
 type JavaStatusLegacy struct {
-	Version   *Version               `json:"version"`
-	Players   LegacyPlayers          `json:"players"`
-	MOTD      description.Formatting `json:"motd"`
-	SRVResult *SRVRecord             `json:"srv_result"`
+	Version   *Version          `json:"version"`
+	Players   LegacyPlayers     `json:"players"`
+	MOTD      formatting.Result `json:"motd"`
+	SRVResult *SRVRecord        `json:"srv_result"`
 }
 
 type LegacyPlayers struct {
@@ -59,17 +59,17 @@ type LegacyPlayers struct {
 }
 
 type BedrockStatus struct {
-	ServerGUID      int64                   `json:"server_guid"`
-	Edition         *string                 `json:"edition"`
-	MOTD            *description.Formatting `json:"motd"`
-	ProtocolVersion *int64                  `json:"protocol_version"`
-	Version         *string                 `json:"version"`
-	OnlinePlayers   *int64                  `json:"online_players"`
-	MaxPlayers      *int64                  `json:"max_players"`
-	ServerID        *string                 `json:"server_id"`
-	Gamemode        *string                 `json:"gamemode"`
-	GamemodeID      *int64                  `json:"gamemode_id"`
-	PortIPv4        *uint16                 `json:"port_ipv4"`
-	PortIPv6        *uint16                 `json:"port_ipv6"`
-	SRVResult       *SRVRecord              `json:"srv_result"`
+	ServerGUID      int64              `json:"server_guid"`
+	Edition         *string            `json:"edition"`
+	MOTD            *formatting.Result `json:"motd"`
+	ProtocolVersion *int64             `json:"protocol_version"`
+	Version         *string            `json:"version"`
+	OnlinePlayers   *int64             `json:"online_players"`
+	MaxPlayers      *int64             `json:"max_players"`
+	ServerID        *string            `json:"server_id"`
+	Gamemode        *string            `json:"gamemode"`
+	GamemodeID      *int64             `json:"gamemode_id"`
+	PortIPv4        *uint16            `json:"port_ipv4"`
+	PortIPv6        *uint16            `json:"port_ipv6"`
+	SRVResult       *SRVRecord         `json:"srv_result"`
 }

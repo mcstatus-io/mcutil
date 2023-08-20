@@ -2,6 +2,7 @@ package mcutil
 
 import (
 	"bufio"
+	"context"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -15,8 +16,27 @@ import (
 	"github.com/mcstatus-io/mcutil/options"
 )
 
-// SendVote sends a legacy Votifier vote to the specified Minecraft server
-func SendLegacyVote(host string, port uint16, opts options.LegacyVote) error {
+// SendLegacyVote sends a legacy Votifier vote to the specified Minecraft server
+func SendLegacyVote(ctx context.Context, host string, port uint16, opts options.LegacyVote) error {
+	e := make(chan error, 1)
+
+	go func() {
+		e <- sendLegacyVote(host, port, opts)
+	}()
+
+	select {
+	case <-ctx.Done():
+		if v := ctx.Err(); v != nil {
+			return v
+		}
+
+		return errors.New("context finished before server sent response")
+	case v := <-e:
+		return v
+	}
+}
+
+func sendLegacyVote(host string, port uint16, opts options.LegacyVote) error {
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
 
 	if err != nil {

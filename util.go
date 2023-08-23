@@ -53,7 +53,7 @@ func readNTString(r io.Reader) (string, error) {
 }
 
 // LookupSRV resolves any Minecraft SRV record from the DNS of the domain
-func LookupSRV(protocol, host string, port uint16) (*net.SRV, error) {
+func LookupSRV(protocol, host string) (*net.SRV, error) {
 	_, addrs, err := net.LookupSRV("minecraft", protocol, host)
 
 	if err != nil {

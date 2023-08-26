@@ -44,7 +44,7 @@ func getStatusRaw(host string, port uint16, options ...options.JavaStatus) (map[
 	opts := parseJavaStatusOptions(options...)
 
 	if opts.EnableSRV && port == 25565 {
-		record, err := LookupSRV("tcp", host, port)
+		record, err := LookupSRV("tcp", host)
 
 		if err == nil && record != nil {
 			host = record.Target

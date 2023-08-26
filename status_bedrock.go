@@ -65,7 +65,7 @@ func getStatusBedrock(host string, port uint16, options ...options.BedrockStatus
 	var srvResult *response.SRVRecord = nil
 
 	if opts.EnableSRV && port == 19132 {
-		record, err := LookupSRV("udp", host, port)
+		record, err := LookupSRV("udp", host)
 
 		if err == nil && record != nil {
 			host = record.Target

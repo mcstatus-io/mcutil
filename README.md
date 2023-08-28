@@ -165,14 +165,14 @@ func main() {
 Executes remote console commands on the server. You must know the connection details of the RCON server, as well as the password.
 
 ```go
-import "github.com/mcstatus-io/mcutil"
+import "github.com/mcstatus-io/mcutil/rcon"
 
 func main() {
-    client := mcutil.NewRCON()
+    client, err := rcon.Connect("127.0.0.1", 25575)
 
-    if err := client.Dial("127.0.0.1", 25575); err != nil {
-        panic(err)
-    }
+	if err != nil {
+		panic(err)
+	}
 
     if err := client.Login("mypassword"); err != nil {
         panic(err)

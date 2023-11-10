@@ -38,7 +38,7 @@ func Parse(input interface{}, defaultColor ...colors.Color) (*Result, error) {
 		}
 	case map[string]interface{}:
 		{
-			tree, err = parseString(parseChatObject(v, defColor), defColor)
+			tree, err = parseString(parseChatObject(v, nil, defColor), defColor)
 
 			break
 		}
@@ -58,8 +58,11 @@ func Parse(input interface{}, defaultColor ...colors.Color) (*Result, error) {
 	}, nil
 }
 
-func parseChatObject(m map[string]interface{}, defaultColor colors.Color) (result string) {
+func parseChatObject(m map[string]interface{}, p map[string]interface{}, defaultColor colors.Color) (result string) {
 	if v, ok := m["color"].(string); ok {
+		result += colors.Parse(v).ToRaw()
+	} else if v, ok := p["color"].(string); ok {
+		m["color"] = v
 		result += colors.Parse(v).ToRaw()
 	} else {
 		result += defaultColor.ToRaw()
@@ -67,32 +70,49 @@ func parseChatObject(m map[string]interface{}, defaultColor colors.Color) (resul
 
 	if v, ok := m["bold"]; ok && parseBool(v) {
 		result += decorators.Bold.ToRaw()
+	} else if v, ok := p["bold"]; ok && parseBool(v) {
+		m["bold"] = v
+		result += decorators.Bold.ToRaw()
 	}
 
 	if v, ok := m["italic"]; ok && parseBool(v) {
+		result += decorators.Italic.ToRaw()
+	} else if v, ok := p["italic"]; ok && parseBool(v) {
+		m["italic"] = v
 		result += decorators.Italic.ToRaw()
 	}
 
 	if v, ok := m["underlined"]; ok && parseBool(v) {
 		result += decorators.Underline.ToRaw()
+	} else if v, ok := p["underlined"]; ok && parseBool(v) {
+		m["underlined"] = v
+		result += decorators.Underline.ToRaw()
 	}
 
 	if v, ok := m["strikethrough"]; ok && parseBool(v) {
+		result += decorators.Strikethrough.ToRaw()
+	} else if v, ok := p["strikethrough"]; ok && parseBool(v) {
+		m["strikethrough"] = v
 		result += decorators.Strikethrough.ToRaw()
 	}
 
 	if v, ok := m["obfuscated"]; ok && parseBool(v) {
 		result += decorators.Obfuscated.ToRaw()
+	} else if v, ok := p["obfuscated"]; ok && parseBool(v) {
+		m["obfuscated"] = v
+		result += decorators.Obfuscated.ToRaw()
 	}
 
 	if text, ok := m["text"].(string); ok {
 		result += text
+	} else if translate, ok := m["translate"].(string); ok {
+		result += translate
 	}
 
 	if extra, ok := m["extra"].([]interface{}); ok {
 		for _, v := range extra {
 			if v2, ok := v.(map[string]interface{}); ok {
-				result += parseChatObject(v2, defaultColor)
+				result += parseChatObject(v2, m, defaultColor)
 			}
 		}
 	}

@@ -105,8 +105,6 @@ func parseChatObject(m map[string]interface{}, p map[string]interface{}, default
 
 	if text, ok := m["text"].(string); ok {
 		result += text
-	} else if translate, ok := m["translate"].(string); ok {
-		result += translate
 	}
 
 	if extra, ok := m["extra"].([]interface{}); ok {

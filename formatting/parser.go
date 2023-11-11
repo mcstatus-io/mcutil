@@ -19,11 +19,10 @@ type Result struct {
 // Parse parses the formatting of any string or Chat object
 func Parse(input interface{}, defaultColor ...colors.Color) (*Result, error) {
 	var (
-		tree []Item = nil
-		err  error
+		tree     []Item = nil
+		err      error
+		defColor colors.Color = colors.White
 	)
-
-	defColor := colors.White
 
 	if len(defaultColor) > 0 {
 		defColor = defaultColor[0]
@@ -58,59 +57,65 @@ func Parse(input interface{}, defaultColor ...colors.Color) (*Result, error) {
 	}, nil
 }
 
-func parseChatObject(m map[string]interface{}, p map[string]interface{}, defaultColor colors.Color) (result string) {
-	if v, ok := m["color"].(string); ok {
+func parseChatObject(current map[string]interface{}, parent map[string]interface{}, defaultColor colors.Color) (result string) {
+	if v, ok := current["color"].(string); ok {
 		result += colors.Parse(v).ToRaw()
-	} else if v, ok := p["color"].(string); ok {
-		m["color"] = v
+	} else if v, ok := parent["color"].(string); ok {
+		current["color"] = v
+
 		result += colors.Parse(v).ToRaw()
 	} else {
 		result += defaultColor.ToRaw()
 	}
 
-	if v, ok := m["bold"]; ok && parseBool(v) {
+	if v, ok := current["bold"]; ok && parseBool(v) {
 		result += decorators.Bold.ToRaw()
-	} else if v, ok := p["bold"]; ok && parseBool(v) {
-		m["bold"] = v
+	} else if v, ok := parent["bold"]; ok && parseBool(v) {
+		current["bold"] = v
+
 		result += decorators.Bold.ToRaw()
 	}
 
-	if v, ok := m["italic"]; ok && parseBool(v) {
+	if v, ok := current["italic"]; ok && parseBool(v) {
 		result += decorators.Italic.ToRaw()
-	} else if v, ok := p["italic"]; ok && parseBool(v) {
-		m["italic"] = v
+	} else if v, ok := parent["italic"]; ok && parseBool(v) {
+		current["italic"] = v
+
 		result += decorators.Italic.ToRaw()
 	}
 
-	if v, ok := m["underlined"]; ok && parseBool(v) {
+	if v, ok := current["underlined"]; ok && parseBool(v) {
 		result += decorators.Underline.ToRaw()
-	} else if v, ok := p["underlined"]; ok && parseBool(v) {
-		m["underlined"] = v
+	} else if v, ok := parent["underlined"]; ok && parseBool(v) {
+		current["underlined"] = v
+
 		result += decorators.Underline.ToRaw()
 	}
 
-	if v, ok := m["strikethrough"]; ok && parseBool(v) {
+	if v, ok := current["strikethrough"]; ok && parseBool(v) {
 		result += decorators.Strikethrough.ToRaw()
-	} else if v, ok := p["strikethrough"]; ok && parseBool(v) {
-		m["strikethrough"] = v
+	} else if v, ok := parent["strikethrough"]; ok && parseBool(v) {
+		current["strikethrough"] = v
+
 		result += decorators.Strikethrough.ToRaw()
 	}
 
-	if v, ok := m["obfuscated"]; ok && parseBool(v) {
+	if v, ok := current["obfuscated"]; ok && parseBool(v) {
 		result += decorators.Obfuscated.ToRaw()
-	} else if v, ok := p["obfuscated"]; ok && parseBool(v) {
-		m["obfuscated"] = v
+	} else if v, ok := parent["obfuscated"]; ok && parseBool(v) {
+		current["obfuscated"] = v
+
 		result += decorators.Obfuscated.ToRaw()
 	}
 
-	if text, ok := m["text"].(string); ok {
+	if text, ok := current["text"].(string); ok {
 		result += text
 	}
 
-	if extra, ok := m["extra"].([]interface{}); ok {
+	if extra, ok := current["extra"].([]interface{}); ok {
 		for _, v := range extra {
 			if v2, ok := v.(map[string]interface{}); ok {
-				result += parseChatObject(v2, m, defaultColor)
+				result += parseChatObject(v2, current, defaultColor)
 			}
 		}
 	}
@@ -119,15 +124,15 @@ func parseChatObject(m map[string]interface{}, p map[string]interface{}, default
 }
 
 func parseString(s string, defaultColor colors.Color) ([]Item, error) {
-	tree := make([]Item, 0)
-
-	item := Item{
-		Text:       "",
-		Color:      defaultColor,
-		Decorators: make([]decorators.Decorator, 0),
-	}
-
-	r := strings.NewReader(s)
+	var (
+		tree []Item = make([]Item, 0)
+		item Item   = Item{
+			Text:       "",
+			Color:      defaultColor,
+			Decorators: make([]decorators.Decorator, 0),
+		}
+		r *strings.Reader = strings.NewReader(s)
+	)
 
 	for r.Len() > 0 {
 		char, n, err := r.ReadRune()

@@ -137,17 +137,6 @@ func parseString(s string) ([]Item, error) {
 			break
 		}
 
-		if char == '\n' {
-			tree = append(tree, item)
-
-			item = Item{
-				Text:       "\n",
-				Decorators: make([]decorators.Decorator, 0),
-			}
-
-			continue
-		}
-
 		if char != '\u00A7' {
 			item.Text += string(char)
 

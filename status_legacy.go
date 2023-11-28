@@ -12,16 +12,14 @@ import (
 	"unicode/utf16"
 
 	"github.com/mcstatus-io/mcutil/v2/formatting"
-	"github.com/mcstatus-io/mcutil/v2/formatting/colors"
 	"github.com/mcstatus-io/mcutil/v2/options"
 	"github.com/mcstatus-io/mcutil/v2/response"
 )
 
 var (
 	defaultJavaStatusLegacyOptions = options.JavaStatusLegacy{
-		EnableSRV:        true,
-		Timeout:          time.Second * 5,
-		DefaultMOTDColor: colors.White,
+		EnableSRV: true,
+		Timeout:   time.Second * 5,
 	}
 )
 
@@ -158,7 +156,7 @@ func getStatusLegacy(host string, port uint16, options ...options.JavaStatusLega
 				return nil, err
 			}
 
-			motd, err := formatting.Parse(split[3], opts.DefaultMOTDColor)
+			motd, err := formatting.Parse(split[3])
 
 			if err != nil {
 				return nil, err
@@ -200,7 +198,7 @@ func getStatusLegacy(host string, port uint16, options ...options.JavaStatusLega
 			return nil, fmt.Errorf("status: not enough information received (expected=3, received=%d)", len(split))
 		}
 
-		motd, err := formatting.Parse(split[0], opts.DefaultMOTDColor)
+		motd, err := formatting.Parse(split[0])
 
 		if err != nil {
 			return nil, err

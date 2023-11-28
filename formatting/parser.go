@@ -17,27 +17,22 @@ type Result struct {
 }
 
 // Parse parses the formatting of any string or Chat object
-func Parse(input interface{}, defaultColor ...colors.Color) (*Result, error) {
+func Parse(input interface{}) (*Result, error) {
 	var (
-		tree     []Item = nil
-		err      error
-		defColor colors.Color = colors.White
+		tree []Item = nil
+		err  error
 	)
-
-	if len(defaultColor) > 0 {
-		defColor = defaultColor[0]
-	}
 
 	switch v := input.(type) {
 	case string:
 		{
-			tree, err = parseString(v, defColor)
+			tree, err = parseString(v)
 
 			break
 		}
 	case map[string]interface{}:
 		{
-			tree, err = parseString(parseChatObject(v, nil, defColor), defColor)
+			tree, err = parseString(parseChatObject(v, nil))
 
 			break
 		}
@@ -57,15 +52,13 @@ func Parse(input interface{}, defaultColor ...colors.Color) (*Result, error) {
 	}, nil
 }
 
-func parseChatObject(current map[string]interface{}, parent map[string]interface{}, defaultColor colors.Color) (result string) {
+func parseChatObject(current map[string]interface{}, parent map[string]interface{}) (result string) {
 	if v, ok := current["color"].(string); ok {
 		result += colors.Parse(v).ToRaw()
 	} else if v, ok := parent["color"].(string); ok {
 		current["color"] = v
 
 		result += colors.Parse(v).ToRaw()
-	} else {
-		result += defaultColor.ToRaw()
 	}
 
 	if v, ok := current["bold"]; ok && parseBool(v) {
@@ -115,7 +108,7 @@ func parseChatObject(current map[string]interface{}, parent map[string]interface
 	if extra, ok := current["extra"].([]interface{}); ok {
 		for _, v := range extra {
 			if v2, ok := v.(map[string]interface{}); ok {
-				result += parseChatObject(v2, current, defaultColor)
+				result += parseChatObject(v2, current)
 			}
 		}
 	}
@@ -123,12 +116,11 @@ func parseChatObject(current map[string]interface{}, parent map[string]interface
 	return
 }
 
-func parseString(s string, defaultColor colors.Color) ([]Item, error) {
+func parseString(s string) ([]Item, error) {
 	var (
 		tree []Item = make([]Item, 0)
 		item Item   = Item{
 			Text:       "",
-			Color:      defaultColor,
 			Decorators: make([]decorators.Decorator, 0),
 		}
 		r *strings.Reader = strings.NewReader(s)
@@ -150,7 +142,6 @@ func parseString(s string, defaultColor colors.Color) ([]Item, error) {
 
 			item = Item{
 				Text:       "\n",
-				Color:      defaultColor,
 				Decorators: make([]decorators.Decorator, 0),
 			}
 
@@ -179,13 +170,13 @@ func parseString(s string, defaultColor colors.Color) ([]Item, error) {
 				color := colors.Parse(code)
 
 				if len(item.Text) == 0 && len(item.Decorators) == 0 {
-					item.Color = color
+					item.Color = &color
 				} else {
 					tree = append(tree, item)
 
 					item = Item{
 						Text:       "",
-						Color:      color,
+						Color:      &color,
 						Decorators: make([]decorators.Decorator, 0),
 					}
 				}
@@ -202,8 +193,7 @@ func parseString(s string, defaultColor colors.Color) ([]Item, error) {
 					tree = append(tree, item)
 
 					item = Item{
-						Text:  "",
-						Color: defaultColor,
+						Text: "",
 						Decorators: []decorators.Decorator{
 							decorator,
 						},
@@ -214,7 +204,7 @@ func parseString(s string, defaultColor colors.Color) ([]Item, error) {
 			}
 		case 'r':
 			{
-				if len(item.Text) == 0 && item.Color == defaultColor && len(item.Decorators) == 0 {
+				if len(item.Text) == 0 && len(item.Decorators) == 0 {
 					break
 				}
 
@@ -222,7 +212,6 @@ func parseString(s string, defaultColor colors.Color) ([]Item, error) {
 
 				item = Item{
 					Text:       "",
-					Color:      defaultColor,
 					Decorators: make([]decorators.Decorator, 0),
 				}
 

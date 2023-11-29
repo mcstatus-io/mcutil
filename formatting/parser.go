@@ -161,7 +161,9 @@ func parseString(s string) ([]Item, error) {
 				if len(item.Text) == 0 && len(item.Decorators) == 0 {
 					item.Color = &color
 				} else {
-					tree = append(tree, item)
+					if len(item.Text) > 0 {
+						tree = append(tree, item)
+					}
 
 					item = Item{
 						Text:       "",
@@ -182,10 +184,9 @@ func parseString(s string) ([]Item, error) {
 					tree = append(tree, item)
 
 					item = Item{
-						Text: "",
-						Decorators: []decorators.Decorator{
-							decorator,
-						},
+						Text:       "",
+						Color:      item.Color,
+						Decorators: append(item.Decorators, decorator),
 					}
 				}
 

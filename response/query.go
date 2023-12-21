@@ -1,6 +1,6 @@
 package response
 
-import "github.com/mcstatus-io/mcutil/v2/formatting"
+import "github.com/mcstatus-io/mcutil/v3/formatting"
 
 type BasicQuery struct {
 	MOTD          formatting.Result `json:"motd"`

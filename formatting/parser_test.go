@@ -5,7 +5,7 @@ import (
 	"log"
 	"testing"
 
-	"github.com/mcstatus-io/mcutil/v2/formatting"
+	"github.com/mcstatus-io/mcutil/v3/formatting"
 )
 
 func TestParser(t *testing.T) {

@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v2/options"
+	"github.com/mcstatus-io/mcutil/v3/options"
 )
 
 var (

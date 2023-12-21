@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/jessevdk/go-flags"
-	"github.com/mcstatus-io/mcutil/v2"
+	"github.com/mcstatus-io/mcutil/v3"
 )
 
 var (

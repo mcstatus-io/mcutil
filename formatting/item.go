@@ -5,8 +5,8 @@ import (
 	"html"
 	"strings"
 
-	"github.com/mcstatus-io/mcutil/v2/formatting/colors"
-	"github.com/mcstatus-io/mcutil/v2/formatting/decorators"
+	"github.com/mcstatus-io/mcutil/v3/formatting/colors"
+	"github.com/mcstatus-io/mcutil/v3/formatting/decorators"
 )
 
 // Item is a single formatting item that contains a color and any optional formatting controls

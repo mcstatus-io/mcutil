@@ -15,17 +15,15 @@ import (
 	"time"
 
 	"github.com/mcstatus-io/mcutil/v2/formatting"
-	"github.com/mcstatus-io/mcutil/v2/formatting/colors"
 	"github.com/mcstatus-io/mcutil/v2/options"
 	"github.com/mcstatus-io/mcutil/v2/response"
 )
 
 var (
 	defaultBedrockStatusOptions = options.BedrockStatus{
-		EnableSRV:        true,
-		Timeout:          time.Second * 5,
-		ClientGUID:       0,
-		DefaultMOTDColor: colors.White,
+		EnableSRV:  true,
+		Timeout:    time.Second * 5,
+		ClientGUID: 0,
 	}
 	bedrockMagic = []byte{0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78}
 )
@@ -323,7 +321,7 @@ func getStatusBedrock(host string, port uint16, options ...options.BedrockStatus
 	}
 
 	if len(motd) > 0 {
-		parsedMOTD, err := formatting.Parse(motd, opts.DefaultMOTDColor)
+		parsedMOTD, err := formatting.Parse(motd)
 
 		if err != nil {
 			return nil, err

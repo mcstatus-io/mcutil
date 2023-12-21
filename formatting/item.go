@@ -12,13 +12,14 @@ import (
 // Item is a single formatting item that contains a color and any optional formatting controls
 type Item struct {
 	Text       string                 `json:"text"`
-	Color      colors.Color           `json:"color"`
+	Color      *colors.Color          `json:"color,omitempty"`
 	Decorators []decorators.Decorator `json:"decorators"`
 }
 
 // Raw returns the Minecraft encoding of the formatting (§ + formatting codes/color + text)
 func (i Item) Raw() (result string) {
-	if i.Color != colors.White {
+
+	if i.Color != nil {
 		result += i.Color.ToRaw()
 	}
 
@@ -42,8 +43,10 @@ func (i Item) Clean() string {
 func (i Item) HTML() string {
 	classes := make([]string, 0)
 
-	styles := map[string]string{
-		"color": i.Color.ToHex(),
+	styles := map[string]string{}
+
+	if i.Color != nil {
+		styles["color"] = i.Color.ToHex()
 	}
 
 	for _, decorator := range i.Decorators {

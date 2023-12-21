@@ -13,17 +13,15 @@ import (
 	"time"
 
 	"github.com/mcstatus-io/mcutil/v2/formatting"
-	"github.com/mcstatus-io/mcutil/v2/formatting/colors"
 	"github.com/mcstatus-io/mcutil/v2/options"
 	"github.com/mcstatus-io/mcutil/v2/response"
 )
 
 var (
 	defaultJavaStatusOptions = options.JavaStatus{
-		EnableSRV:        true,
-		Timeout:          time.Second * 5,
-		ProtocolVersion:  47,
-		DefaultMOTDColor: colors.White,
+		EnableSRV:       true,
+		Timeout:         time.Second * 5,
+		ProtocolVersion: 47,
 	}
 )
 
@@ -300,7 +298,7 @@ func readJavaStatusPongPacket(r io.Reader, payload int64) error {
 }
 
 func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration, opts options.JavaStatus) (*response.JavaStatus, error) {
-	motd, err := formatting.Parse(serverResponse.Description, opts.DefaultMOTDColor)
+	motd, err := formatting.Parse(serverResponse.Description)
 
 	if err != nil {
 		return nil, err

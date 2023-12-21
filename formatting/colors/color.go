@@ -78,7 +78,7 @@ func Parse(value interface{}) Color {
 	case 'g', "g", "minecoin_gold", MinecoinGold:
 		return MinecoinGold
 	default:
-		return White
+		return Gray
 	}
 }
 

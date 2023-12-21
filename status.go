@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -82,7 +81,7 @@ func Status(ctx context.Context, host string, port uint16, options ...options.Ja
 			return nil, v
 		}
 
-		return nil, errors.New("context finished before server sent response")
+		return nil, context.DeadlineExceeded
 	case v := <-r:
 		return v, nil
 	case v := <-e:

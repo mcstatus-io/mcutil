@@ -3,7 +3,6 @@ package mcutil
 import (
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"net"
 	"strconv"
@@ -44,7 +43,7 @@ func StatusLegacy(ctx context.Context, host string, port uint16, options ...opti
 			return nil, v
 		}
 
-		return nil, errors.New("context finished before server sent response")
+		return nil, context.DeadlineExceeded
 	case v := <-r:
 		return v, nil
 	case v := <-e:

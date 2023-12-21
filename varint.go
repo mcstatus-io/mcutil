@@ -2,7 +2,13 @@ package mcutil
 
 import (
 	"encoding/binary"
+	"errors"
 	"io"
+)
+
+var (
+	// ErrVarIntTooBig means the varint received from the server is too big
+	ErrVarIntTooBig = errors.New("varint: varint is too big")
 )
 
 func readVarInt(r io.Reader) (int32, error) {

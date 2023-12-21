@@ -2,7 +2,6 @@ package mcutil
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"math/rand"
 	"net"
@@ -32,7 +31,7 @@ func StatusRaw(ctx context.Context, host string, port uint16, options ...options
 			return nil, v
 		}
 
-		return nil, errors.New("context finished before server sent response")
+		return nil, context.DeadlineExceeded
 	case v := <-r:
 		return v, nil
 	case v := <-e:

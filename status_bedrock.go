@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"io"
 	"math/rand"
@@ -49,7 +48,7 @@ func StatusBedrock(ctx context.Context, host string, port uint16, options ...opt
 			return nil, v
 		}
 
-		return nil, errors.New("context finished before server sent response")
+		return nil, context.DeadlineExceeded
 	case v := <-r:
 		return v, nil
 	case v := <-e:

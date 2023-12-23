@@ -46,7 +46,7 @@ func init() {
 
 	if len(args) < 2 {
 		switch opts.Type {
-		case "java", "legacy":
+		case "java", "legacy", "raw":
 			{
 				port = 25565
 
@@ -88,6 +88,12 @@ func main() {
 	case "java":
 		{
 			result, err = mcutil.Status(ctx, host, port)
+
+			break
+		}
+	case "raw":
+		{
+			result, err = mcutil.StatusRaw(ctx, host, port)
 
 			break
 		}

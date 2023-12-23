@@ -52,6 +52,39 @@ func readNTString(r io.Reader) (string, error) {
 	return string(result), nil
 }
 
+func parsePlayerID(value interface{}) (string, bool) {
+	switch v := value.(type) {
+	case string:
+		return v, true
+	case []interface{}:
+		{
+			if len(v) != 4 {
+				return "", false
+			}
+
+			var a, b uint64
+
+			for i, val := range v {
+				parsed, ok := val.(float64)
+
+				if !ok {
+					return "", false
+				}
+
+				if i < 2 {
+					a |= uint64(parsed) << ((i % 2) * 8)
+				} else {
+					b |= uint64(parsed) << ((i % 2) * 8)
+				}
+			}
+
+			return fmt.Sprintf("%016x%016x", a, b), true
+		}
+	default:
+		return "", false
+	}
+}
+
 // LookupSRV resolves any Minecraft SRV record from the DNS of the domain
 func LookupSRV(protocol, host string) (*net.SRV, error) {
 	_, addrs, err := net.LookupSRV("minecraft", protocol, host)

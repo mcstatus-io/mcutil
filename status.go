@@ -33,8 +33,8 @@ type rawJavaStatus struct {
 		Max    *int64 `json:"max"`
 		Online *int64 `json:"online"`
 		Sample []struct {
-			Name string `json:"name"`
-			ID   string `json:"id"`
+			ID   interface{} `json:"id"`
+			Name string      `json:"name"`
 		} `json:"sample"`
 	} `json:"players"`
 	Description interface{} `json:"description"`
@@ -313,8 +313,14 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 				return nil, err
 			}
 
+			uuid, ok := parsePlayerID(player.ID)
+
+			if !ok {
+				return nil, fmt.Errorf("status: invalid player UUID: %+v", player.ID)
+			}
+
 			samplePlayers = append(samplePlayers, response.SamplePlayer{
-				ID:        player.ID,
+				ID:        uuid,
 				NameRaw:   name.Raw,
 				NameClean: name.Clean,
 				NameHTML:  name.HTML,

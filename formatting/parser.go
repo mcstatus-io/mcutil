@@ -32,7 +32,7 @@ func Parse(input interface{}) (*Result, error) {
 		}
 	case map[string]interface{}:
 		{
-			tree, err = parseString(parseChatObject(v, nil))
+			tree, err = parseString(convertChatToString(v, nil))
 
 			break
 		}
@@ -52,7 +52,7 @@ func Parse(input interface{}) (*Result, error) {
 	}, nil
 }
 
-func parseChatObject(current map[string]interface{}, parent map[string]interface{}) (result string) {
+func convertChatToString(current map[string]interface{}, parent map[string]interface{}) (result string) {
 	if v, ok := current["color"].(string); ok {
 		result += colors.Parse(v).ToRaw()
 	} else if v, ok := parent["color"].(string); ok {
@@ -107,8 +107,19 @@ func parseChatObject(current map[string]interface{}, parent map[string]interface
 
 	if extra, ok := current["extra"].([]interface{}); ok {
 		for _, v := range extra {
-			if v2, ok := v.(map[string]interface{}); ok {
-				result += parseChatObject(v2, current)
+			switch val := v.(type) {
+			case map[string]interface{}:
+				{
+					result += convertChatToString(val, current)
+
+					break
+				}
+			case string:
+				{
+					result += val
+
+					break
+				}
 			}
 		}
 	}
@@ -116,14 +127,14 @@ func parseChatObject(current map[string]interface{}, parent map[string]interface
 	return
 }
 
-func parseString(s string) ([]Item, error) {
+func parseString(input string) ([]Item, error) {
 	var (
 		tree []Item = make([]Item, 0)
 		item Item   = Item{
 			Text:       "",
 			Decorators: make([]decorators.Decorator, 0),
 		}
-		r *strings.Reader = strings.NewReader(s)
+		r *strings.Reader = strings.NewReader(input)
 	)
 
 	for r.Len() > 0 {
@@ -141,7 +152,7 @@ func parseString(s string) ([]Item, error) {
 			tree = append(tree, item)
 
 			item = Item{
-				Text:       "",
+				Text:       "\n",
 				Decorators: make([]decorators.Decorator, 0),
 			}
 

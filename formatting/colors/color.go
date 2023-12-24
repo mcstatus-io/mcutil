@@ -38,47 +38,49 @@ var (
 	White Color = 'f'
 	// MinecoinGold is Minecraft color code §g (#ddd605)
 	MinecoinGold Color = 'g'
+	// Unknown is an unknown parsed color
+	Unknown Color = '-'
 )
 
 // Parse attempts to return a Color type based on a color code string, color name string, or a Color type itself
-func Parse(value interface{}) Color {
+func Parse(value interface{}) (Color, bool) {
 	switch value {
 	case '0', "0", "black", Black:
-		return Black
+		return Black, true
 	case '1', "1", "dark_blue", DarkBlue:
-		return DarkBlue
+		return DarkBlue, true
 	case '2', "2", "dark_green", DarkGreen:
-		return DarkGreen
+		return DarkGreen, true
 	case '3', "3", "dark_aqua", DarkAqua:
-		return DarkAqua
+		return DarkAqua, true
 	case '4', "4", "dark_red", DarkRed:
-		return DarkRed
+		return DarkRed, true
 	case '5', "5", "dark_purple", DarkPurple:
-		return DarkPurple
+		return DarkPurple, true
 	case '6', "6", "gold", Gold:
-		return Gold
+		return Gold, true
 	case '7', "7", "gray", Gray:
-		return Gray
+		return Gray, true
 	case '8', "8", "dark_gray", DarkGray:
-		return DarkGray
+		return DarkGray, true
 	case '9', "9", "blue", Blue:
-		return Blue
+		return Blue, true
 	case 'a', "a", "green", Green:
-		return Green
+		return Green, true
 	case 'b', "b", "aqua", Aqua:
-		return Aqua
+		return Aqua, true
 	case 'c', "c", "red", Red:
-		return Red
+		return Red, true
 	case 'd', "d", "light_purple", LightPurple:
-		return LightPurple
+		return LightPurple, true
 	case 'e', "e", "yellow", Yellow:
-		return Yellow
+		return Yellow, true
 	case 'f', "f", "white", White:
-		return White
+		return White, true
 	case 'g', "g", "minecoin_gold", MinecoinGold:
-		return MinecoinGold
+		return MinecoinGold, true
 	default:
-		return Gray
+		return Unknown, false
 	}
 }
 

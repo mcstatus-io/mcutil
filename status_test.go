@@ -8,7 +8,7 @@ import (
 )
 
 func TestStatus(t *testing.T) {
-	resp, err := mcutil.Status(context.Background(), "demo.mcstatus.io", mcutil.DefaultJavaPort)
+	resp, err := mcutil.Status(context.Background(), "top.mc-complex.com", mcutil.DefaultJavaPort)
 
 	if err != nil {
 		t.Fatal(err)

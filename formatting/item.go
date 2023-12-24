@@ -73,7 +73,7 @@ func (i Item) HTML() string {
 
 				break
 			}
-		case decorators.Underline:
+		case decorators.Underlined:
 			{
 				if _, ok := styles["text-decoration"]; ok {
 					styles["text-decoration"] += " "

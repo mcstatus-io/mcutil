@@ -16,13 +16,12 @@ import (
 	"github.com/mcstatus-io/mcutil/v3/response"
 )
 
-var (
-	defaultJavaStatusOptions = options.JavaStatus{
-		EnableSRV:       true,
-		Timeout:         time.Second * 5,
-		ProtocolVersion: -1,
-	}
-)
+var defaultJavaStatusOptions = options.JavaStatus{
+	EnableSRV:       true,
+	Timeout:         time.Second * 5,
+	ProtocolVersion: 47,
+	Ping:            true,
+}
 
 type rawJavaStatus struct {
 	Version struct {
@@ -92,14 +91,18 @@ func Status(ctx context.Context, host string, port uint16, options ...options.Ja
 func getStatus(host string, port uint16, options ...options.JavaStatus) (*response.JavaStatus, error) {
 	opts := parseJavaStatusOptions(options...)
 
-	var srvRecord *response.SRVRecord = nil
+	var (
+		connectionHost string              = host
+		connectionPort uint16              = port
+		srvRecord      *response.SRVRecord = nil
+	)
 
 	if opts.EnableSRV && port == 25565 {
 		record, err := LookupSRV("tcp", host)
 
 		if err == nil && record != nil {
-			host = record.Target
-			port = record.Port
+			connectionHost = record.Target
+			connectionPort = record.Port
 
 			srvRecord = &response.SRVRecord{
 				Host: record.Target,
@@ -108,7 +111,7 @@ func getStatus(host string, port uint16, options ...options.JavaStatus) (*respon
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -134,19 +137,23 @@ func getStatus(host string, port uint16, options ...options.JavaStatus) (*respon
 		return nil, err
 	}
 
-	payload := rand.Int63()
+	var latency time.Duration = 0
 
-	if err = writeJavaStatusPingPacket(conn, payload); err != nil {
-		return nil, err
+	if opts.Ping {
+		payload := rand.Int63()
+
+		if err = writeJavaStatusPingPacket(conn, payload); err != nil {
+			return nil, err
+		}
+
+		pingStart := time.Now()
+
+		if err = readJavaStatusPongPacket(conn, payload); err != nil {
+			return nil, err
+		}
+
+		latency = time.Since(pingStart)
 	}
-
-	pingStart := time.Now()
-
-	if err = readJavaStatusPongPacket(conn, payload); err != nil {
-		return nil, err
-	}
-
-	latency := time.Since(pingStart)
 
 	return formatJavaStatusResponse(serverResponse, srvRecord, latency, opts)
 }

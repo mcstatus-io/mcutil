@@ -9,6 +9,7 @@ type JavaStatus struct {
 	EnableSRV       bool
 	Timeout         time.Duration
 	ProtocolVersion int
+	Ping            bool
 }
 
 // JavaStatusLegacy is the options used by the StatusLegacy() function

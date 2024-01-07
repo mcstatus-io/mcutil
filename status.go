@@ -20,7 +20,7 @@ var (
 	defaultJavaStatusOptions = options.JavaStatus{
 		EnableSRV:       true,
 		Timeout:         time.Second * 5,
-		ProtocolVersion: 47,
+		ProtocolVersion: -1,
 	}
 )
 

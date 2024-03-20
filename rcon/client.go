@@ -2,6 +2,7 @@ package rcon
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -67,6 +68,8 @@ func (r *Client) Login(password string) error {
 		return ErrAlreadyLoggedIn
 	}
 
+	requestID := r.nextRequestID()
+
 	// Login request packet
 	// https://wiki.vg/RCON#3:_Login
 	{
@@ -78,7 +81,7 @@ func (r *Client) Login(password string) error {
 		}
 
 		// Request ID - int32
-		if err := binary.Write(buf, binary.LittleEndian, int32(0)); err != nil {
+		if err := binary.Write(buf, binary.LittleEndian, requestID); err != nil {
 			return err
 		}
 
@@ -116,16 +119,16 @@ func (r *Client) Login(password string) error {
 
 		// Request ID - int32
 		{
-			var requestID int32
+			var reqID int32
 
-			if err := binary.Read(r.conn, binary.LittleEndian, &requestID); err != nil {
+			if err := binary.Read(r.conn, binary.LittleEndian, &reqID); err != nil {
 				return err
 			}
 
-			if requestID == -1 {
+			if reqID == -1 {
 				return ErrInvalidPassword
-			} else if requestID != 0 {
-				return fmt.Errorf("rcon: received unexpected request ID (expected=0, received=%d)", requestID)
+			} else if reqID != requestID {
+				return fmt.Errorf("rcon: received unexpected request ID (expected=%d, received=%d)", requestID, reqID)
 			}
 		}
 
@@ -154,18 +157,17 @@ func (r *Client) Login(password string) error {
 
 	r.authSuccess = true
 
-	if err := r.conn.SetReadDeadline(time.Time{}); err != nil {
-		return err
-	}
-
 	go (func() {
 		for {
-			// TODO figure out EOF issue, and how to not continuously loop with EOF errors when client is open
-
 			err := r.readMessage()
 
 			if err != nil {
 				fmt.Println(err)
+
+				r.conn.Close()
+				r.conn = nil
+
+				break
 			}
 		}
 	})()
@@ -183,7 +185,7 @@ func (r *Client) Run(command string) error {
 		return ErrNotAuthenticated
 	}
 
-	r.requestID++
+	requestID := r.nextRequestID()
 
 	// Command packet
 	// https://wiki.vg/RCON#2:_Command
@@ -196,7 +198,7 @@ func (r *Client) Run(command string) error {
 		}
 
 		// Request ID - int32
-		if err := binary.Write(buf, binary.LittleEndian, r.requestID); err != nil {
+		if err := binary.Write(buf, binary.LittleEndian, requestID); err != nil {
 			return err
 		}
 
@@ -222,6 +224,30 @@ func (r *Client) Run(command string) error {
 	return nil
 }
 
+// Execute runs the command on the server and attempts to wait for a response
+func (r *Client) Execute(ctx context.Context, command string) (string, error) {
+	if r.conn == nil {
+		return "", ErrNotConnected
+	}
+
+	if !r.authSuccess {
+		return "", ErrNotAuthenticated
+	}
+
+	if err := r.Run(command); err != nil {
+		return "", err
+	}
+
+	for {
+		select {
+		case v := <-r.Messages:
+			return v, nil
+		case <-ctx.Done():
+			return "", context.DeadlineExceeded
+		}
+	}
+}
+
 // Close closes the connection to the server
 func (r *Client) Close() error {
 	r.authSuccess = false
@@ -242,7 +268,10 @@ func (r *Client) readMessage() error {
 	// Command response packet
 	// https://wiki.vg/RCON#0:_Command_response
 	{
-		var packetLength int32
+		var (
+			packetLength int32
+			requestID    int32
+		)
 
 		// Length - int32
 		{
@@ -264,16 +293,8 @@ func (r *Client) readMessage() error {
 
 		// Request ID - int32
 		{
-			data := make([]byte, 4)
-
-			n, err := r.conn.Read(data)
-
-			if err != nil {
+			if err := binary.Read(r.conn, binary.LittleEndian, &requestID); err != nil {
 				return err
-			}
-
-			if n < 4 {
-				return nil
 			}
 		}
 
@@ -285,7 +306,7 @@ func (r *Client) readMessage() error {
 				return err
 			}
 
-			if packetType != 2 {
+			if packetType != 0 {
 				return fmt.Errorf("rcon: received unexpected packet type (expected=0x00, received=0x%02X)", packetType)
 			}
 		}
@@ -309,6 +330,14 @@ func (r *Client) readMessage() error {
 	}
 
 	return nil
+}
+
+func (r *Client) nextRequestID() int32 {
+	value := r.requestID
+
+	r.requestID++
+
+	return value
 }
 
 func parseOptions(opts ...options.RCON) options.RCON {

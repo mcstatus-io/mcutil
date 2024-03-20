@@ -10,6 +10,7 @@ import (
 
 	"github.com/jessevdk/go-flags"
 	"github.com/mcstatus-io/mcutil/v3"
+	"github.com/mcstatus-io/mcutil/v3/options"
 )
 
 var (
@@ -19,8 +20,9 @@ var (
 )
 
 type Options struct {
-	Type    string `short:"t" long:"type" description:"The type of status to retrieve" default:"java"`
-	Timeout uint   `short:"T" long:"timeout" description:"The amount of seconds before the status retrieval times out" default:"5"`
+	Type       string `short:"t" long:"type" description:"The type of status to retrieve" default:"java"`
+	Timeout    uint   `short:"T" long:"timeout" description:"The amount of seconds before the status retrieval times out" default:"5"`
+	DisableSRV bool   `short:"S" long:"disable-srv" description:"Disables SRV lookup"`
 }
 
 func init() {
@@ -87,25 +89,40 @@ func main() {
 	switch opts.Type {
 	case "java":
 		{
-			result, err = mcutil.Status(ctx, host, port)
+			result, err = mcutil.Status(ctx, host, port, options.JavaStatus{
+				EnableSRV:       !opts.DisableSRV,
+				Timeout:         time.Duration(opts.Timeout) * time.Second,
+				ProtocolVersion: 47,
+			})
 
 			break
 		}
 	case "raw":
 		{
-			result, err = mcutil.StatusRaw(ctx, host, port)
+			result, err = mcutil.StatusRaw(ctx, host, port, options.JavaStatus{
+				EnableSRV:       !opts.DisableSRV,
+				Timeout:         time.Duration(opts.Timeout) * time.Second,
+				ProtocolVersion: 47,
+			})
 
 			break
 		}
 	case "legacy":
 		{
-			result, err = mcutil.StatusLegacy(ctx, host, port)
+			result, err = mcutil.StatusLegacy(ctx, host, port, options.JavaStatusLegacy{
+				EnableSRV:       !opts.DisableSRV,
+				Timeout:         time.Duration(opts.Timeout) * time.Second,
+				ProtocolVersion: 47,
+			})
 
 			break
 		}
 	case "bedrock":
 		{
-			result, err = mcutil.StatusBedrock(ctx, host, port)
+			result, err = mcutil.StatusBedrock(ctx, host, port, options.BedrockStatus{
+				EnableSRV: !opts.DisableSRV,
+				Timeout:   time.Duration(opts.Timeout) * time.Second,
+			})
 
 			break
 		}

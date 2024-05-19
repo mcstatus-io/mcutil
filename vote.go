@@ -111,6 +111,10 @@ func sendVote(host string, port uint16, opts options.Vote) error {
 	switch strings.Split(version, ".")[0] {
 	case "1":
 		{
+			if opts.RequireVersion != 0 && opts.RequireVersion != 1 {
+				return fmt.Errorf("vote: version mismatch (server is running Votifier 1, expected to send version %d vote)", opts.RequireVersion)
+			}
+
 			if len(opts.PublicKey) < 1 {
 				return ErrPublicKeyRequired
 			}
@@ -163,6 +167,10 @@ func sendVote(host string, port uint16, opts options.Vote) error {
 		}
 	case "2":
 		{
+			if opts.RequireVersion != 0 && opts.RequireVersion != 2 {
+				return fmt.Errorf("vote: version mismatch (server is running Votifier 2, expected to send version %d vote)", opts.RequireVersion)
+			}
+
 			if len(opts.Token) < 1 {
 				return ErrTokenRequired
 			}

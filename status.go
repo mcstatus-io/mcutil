@@ -155,7 +155,7 @@ func getStatus(host string, port uint16, options ...options.JavaStatus) (*respon
 		latency = time.Since(pingStart)
 	}
 
-	return formatJavaStatusResponse(serverResponse, srvRecord, latency, opts)
+	return formatJavaStatusResponse(serverResponse, srvRecord, latency)
 }
 
 func parseJavaStatusOptions(opts ...options.JavaStatus) options.JavaStatus {
@@ -303,7 +303,7 @@ func readJavaStatusPongPacket(r io.Reader, payload int64) error {
 	return nil
 }
 
-func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration, opts options.JavaStatus) (*response.JavaStatus, error) {
+func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration) (*response.JavaStatus, error) {
 	motd, err := formatting.Parse(serverResponse.Description)
 
 	if err != nil {

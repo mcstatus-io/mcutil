@@ -4,6 +4,7 @@ import "time"
 
 // Vote is the options used by the SendVote() function
 type Vote struct {
+	// Deprecated: This property no longer affects how the vote is sent or processed.
 	RequireVersion int
 	PublicKey      string
 	ServiceName    string

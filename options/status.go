@@ -21,7 +21,6 @@ type JavaStatusLegacy struct {
 
 // BedrockStatus is the options used by the StatusBedrock() function
 type BedrockStatus struct {
-	EnableSRV  bool
 	Timeout    time.Duration
 	ClientGUID int64
 }

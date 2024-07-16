@@ -1,4 +1,4 @@
-package mcutil
+package proto
 
 import (
 	"encoding/binary"
@@ -11,7 +11,7 @@ var (
 	ErrVarIntTooBig = errors.New("varint: varint is too big")
 )
 
-func readVarInt(r io.Reader) (int32, error) {
+func ReadVarInt(r io.Reader) (int32, error) {
 	var value int32 = 0
 	var position int = 0
 	var currentByte byte
@@ -37,7 +37,7 @@ func readVarInt(r io.Reader) (int32, error) {
 	return value, nil
 }
 
-func writeVarInt(val int32, w io.Writer) error {
+func WriteVarInt(val int32, w io.Writer) error {
 	for {
 		if (val & 0x80) == 0 {
 			_, err := w.Write([]byte{byte(val)})

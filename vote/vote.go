@@ -1,4 +1,4 @@
-package mcutil
+package vote
 
 import (
 	"bufio"
@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/options"
+	"github.com/mcstatus-io/mcutil/v4/options"
 )
 
 var (

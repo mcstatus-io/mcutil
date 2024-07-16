@@ -3,7 +3,7 @@ package response
 import (
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting"
+	"github.com/mcstatus-io/mcutil/v4/formatting"
 )
 
 type JavaStatus struct {
@@ -11,8 +11,8 @@ type JavaStatus struct {
 	Players   Players           `json:"players"`
 	MOTD      formatting.Result `json:"motd"`
 	Favicon   *string           `json:"favicon"`
-	SRVResult *SRVRecord        `json:"srv_result"`
-	ModInfo   *ModInfo          `json:"mod_info"`
+	SRVRecord *SRVRecord        `json:"srv_record"`
+	Mods      *ModInfo          `json:"mods"`
 	Latency   time.Duration     `json:"-"`
 }
 
@@ -23,15 +23,13 @@ type Players struct {
 }
 
 type SamplePlayer struct {
-	ID        string `json:"id"`
-	NameRaw   string `json:"name_raw"`
-	NameClean string `json:"name_clean"`
-	NameHTML  string `json:"name_html"`
+	ID   string            `json:"id"`
+	Name formatting.Result `json:"name"`
 }
 
 type ModInfo struct {
 	Type string `json:"type"`
-	Mods []Mod  `json:"mods"`
+	List []Mod  `json:"list"`
 }
 
 type Mod struct {
@@ -40,17 +38,15 @@ type Mod struct {
 }
 
 type Version struct {
-	NameRaw   string `json:"name_raw"`
-	NameClean string `json:"name_clean"`
-	NameHTML  string `json:"name_html"`
-	Protocol  int64  `json:"protocol"`
+	Name     formatting.Result `json:"name"`
+	Protocol int64             `json:"protocol"`
 }
 
 type JavaStatusLegacy struct {
 	Version   *Version          `json:"version"`
 	Players   LegacyPlayers     `json:"players"`
 	MOTD      formatting.Result `json:"motd"`
-	SRVResult *SRVRecord        `json:"srv_result"`
+	SRVRecord *SRVRecord        `json:"srv_record"`
 }
 
 type LegacyPlayers struct {
@@ -71,5 +67,4 @@ type BedrockStatus struct {
 	GamemodeID      *int64             `json:"gamemode_id"`
 	PortIPv4        *uint16            `json:"port_ipv4"`
 	PortIPv6        *uint16            `json:"port_ipv6"`
-	SRVResult       *SRVRecord         `json:"srv_result"`
 }

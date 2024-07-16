@@ -10,7 +10,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/options"
+	"github.com/mcstatus-io/mcutil/v4/options"
 )
 
 var (
@@ -39,8 +39,8 @@ type Client struct {
 	requestID   int32
 }
 
-// Connect connects to the server using the address provided and returns a new client
-func Connect(host string, port uint16, options ...options.RCON) (*Client, error) {
+// Dial connects to the server using the address provided and returns a new client.
+func Dial(host string, port uint16, options ...options.RCON) (*Client, error) {
 	opts := parseOptions(options...)
 
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)

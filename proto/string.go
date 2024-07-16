@@ -1,11 +1,11 @@
-package mcutil
+package proto
 
 import (
 	"io"
 )
 
-func readString(r io.Reader) ([]byte, error) {
-	length, err := readVarInt(r)
+func ReadString(r io.Reader) ([]byte, error) {
+	length, err := ReadVarInt(r)
 
 	if err != nil {
 		return nil, err
@@ -20,8 +20,8 @@ func readString(r io.Reader) ([]byte, error) {
 	return data, nil
 }
 
-func writeString(val string, w io.Writer) error {
-	if err := writeVarInt(int32(len(val)), w); err != nil {
+func WriteString(val string, w io.Writer) error {
+	if err := WriteVarInt(int32(len(val)), w); err != nil {
 		return err
 	}
 

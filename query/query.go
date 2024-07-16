@@ -1,4 +1,4 @@
-package mcutil
+package query
 
 import (
 	"bufio"
@@ -12,9 +12,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting"
-	"github.com/mcstatus-io/mcutil/v3/options"
-	"github.com/mcstatus-io/mcutil/v3/response"
+	"github.com/mcstatus-io/mcutil/v4/formatting"
+	"github.com/mcstatus-io/mcutil/v4/options"
+	"github.com/mcstatus-io/mcutil/v4/response"
+	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
 var (
@@ -25,13 +26,13 @@ var (
 	magic = []byte{0xFE, 0xFD}
 )
 
-// BasicQuery runs a query on the server and returns basic information
-func BasicQuery(ctx context.Context, host string, port uint16, options ...options.Query) (*response.BasicQuery, error) {
+// Basic runs a query on the server and returns basic information.
+func Basic(ctx context.Context, host string, options ...options.Query) (*response.BasicQuery, error) {
 	r := make(chan *response.BasicQuery, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := performBasicQuery(host, port, options...)
+		result, err := performBasicQuery(host, options...)
 
 		if err != nil {
 			e <- err
@@ -54,13 +55,13 @@ func BasicQuery(ctx context.Context, host string, port uint16, options ...option
 	}
 }
 
-// FullQuery runs a query on the server and returns the full information
-func FullQuery(ctx context.Context, host string, port uint16, options ...options.Query) (*response.FullQuery, error) {
+// Full runs a query on the server and returns the full information.
+func Full(ctx context.Context, host string, options ...options.Query) (*response.FullQuery, error) {
 	r := make(chan *response.FullQuery, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := performFullQuery(host, port, options...)
+		result, err := performFullQuery(host, options...)
 
 		if err != nil {
 			e <- err
@@ -83,10 +84,22 @@ func FullQuery(ctx context.Context, host string, port uint16, options ...options
 	}
 }
 
-func performBasicQuery(host string, port uint16, options ...options.Query) (*response.BasicQuery, error) {
+func performBasicQuery(host string, options ...options.Query) (*response.BasicQuery, error) {
 	opts := parseQueryOptions(options...)
 
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	connectionPort := uint16(util.DefaultJavaPort)
+
+	connectionHost, port, err := util.ParseAddress(host)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if port != nil {
+		connectionPort = *port
+	}
+
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -131,10 +144,22 @@ func performBasicQuery(host string, port uint16, options ...options.Query) (*res
 	return response, err
 }
 
-func performFullQuery(host string, port uint16, options ...options.Query) (*response.FullQuery, error) {
+func performFullQuery(host string, options ...options.Query) (*response.FullQuery, error) {
 	opts := parseQueryOptions(options...)
 
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	connectionPort := uint16(util.DefaultJavaPort)
+
+	connectionHost, port, err := util.ParseAddress(host)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if port != nil {
+		connectionPort = *port
+	}
+
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err

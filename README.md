@@ -168,9 +168,9 @@ import "github.com/mcstatus-io/mcutil/v4/rcon"
 func main() {
     client, err := rcon.Dial("127.0.0.1", 25575)
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
     if err := client.Login("mypassword"); err != nil {
         panic(err)

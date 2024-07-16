@@ -23,25 +23,25 @@ Retrieves the status of the Java Edition Minecraft server. This method only work
 
 ```go
 import (
-	"context"
-	"fmt"
-	"time"
+    "context"
+    "fmt"
+    "time"
 
-	"github.com/mcstatus-io/mcutil/v4/status"
+    "github.com/mcstatus-io/mcutil/v4/status"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-	defer cancel()
+    defer cancel()
 
-	response, err := status.Modern(ctx, "demo.mcstatus.io")
+    response, err := status.Modern(ctx, "demo.mcstatus.io")
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
-	fmt.Println(response)
+    fmt.Println(response)
 }
 ```
 
@@ -51,25 +51,25 @@ Retrieves the status of the Java Edition Minecraft server. This is a legacy meth
 
 ```go
 import (
-	"context"
-	"fmt"
-	"time"
+    "context"
+    "fmt"
+    "time"
 
-	"github.com/mcstatus-io/mcutil/v4/status"
+    "github.com/mcstatus-io/mcutil/v4/status"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-	defer cancel()
+    defer cancel()
 
-	response, err := status.Legacy(ctx, "demo.mcstatus.io")
+    response, err := status.Legacy(ctx, "demo.mcstatus.io")
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
-	fmt.Println(response)
+    fmt.Println(response)
 }
 ```
 
@@ -79,25 +79,25 @@ Retrieves the status of the Bedrock Edition Minecraft server.
 
 ```go
 import (
-	"context"
-	"fmt"
-	"time"
+    "context"
+    "fmt"
+    "time"
 
-	"github.com/mcstatus-io/mcutil/v4/status"
+    "github.com/mcstatus-io/mcutil/v4/status"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-	defer cancel()
+    defer cancel()
 
-	response, err := status.Bedrock(ctx, "demo.mcstatus.io")
+    response, err := status.Bedrock(ctx, "demo.mcstatus.io")
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
-	fmt.Println(response)
+    fmt.Println(response)
 }
 ```
 
@@ -107,25 +107,25 @@ Performs a basic query lookup on the server, retrieving most information about t
 
 ```go
 import (
-	"context"
-	"fmt"
-	"time"
+    "context"
+    "fmt"
+    "time"
 
-	"github.com/mcstatus-io/mcutil/v4/query"
+    "github.com/mcstatus-io/mcutil/v4/query"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-	defer cancel()
+    defer cancel()
 
-	response, err := query.Basic(ctx, "play.hypixel.net")
+    response, err := query.Basic(ctx, "play.hypixel.net")
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
-	fmt.Println(response)
+    fmt.Println(response)
 }
 
 ```
@@ -136,25 +136,25 @@ Performs a full query lookup on the server, retrieving all available information
 
 ```go
 import (
-	"context"
-	"fmt"
-	"time"
+    "context"
+    "fmt"
+    "time"
 
-	"github.com/mcstatus-io/mcutil/v4/query"
+    "github.com/mcstatus-io/mcutil/v4/query"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-	defer cancel()
+    defer cancel()
 
-	response, err := query.Full(ctx, "play.hypixel.net")
+    response, err := query.Full(ctx, "play.hypixel.net")
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 
-	fmt.Println(response)
+    fmt.Println(response)
 }
 ```
 
@@ -194,36 +194,36 @@ Sends a Votifier vote to the specified server, typically used by server listing 
 
 ```go
 import (
-	"context"
-	"time"
+    "context"
+    "time"
 
-	"github.com/mcstatus-io/mcutil/v4/vote"
-	"github.com/mcstatus-io/mcutil/v4/options"
+    "github.com/mcstatus-io/mcutil/v4/vote"
+    "github.com/mcstatus-io/mcutil/v4/options"
 )
 
 func main() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+    ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 
-	defer cancel()
+    defer cancel()
 
-	err := vote.SendVote(ctx, "127.0.0.1", 8192, options.Vote{
-		// General
-		ServiceName: "my-service",    // Required
-		Username:    "PassTheMayo",   // Required
-		Timestamp:   time.Now(),      // Required
-		Timeout:     time.Second * 5, // Required
+    err := vote.SendVote(ctx, "127.0.0.1", 8192, options.Vote{
+        // General
+        ServiceName: "my-service",    // Required
+        Username:    "PassTheMayo",   // Required
+        Timestamp:   time.Now(),      // Required
+        Timeout:     time.Second * 5, // Required
 
-		// Votifier 1
-		PublicKey: "...", // Required
+        // Votifier 1
+        PublicKey: "...", // Required
 
-		// Votifier 2
-		Token: "abc123", // Required
-		UUID:  "",       // Optional
-	})
+        // Votifier 2
+        Token: "abc123", // Required
+        UUID:  "",       // Optional
+    })
 
-	if err != nil {
-		panic(err)
-	}
+    if err != nil {
+        panic(err)
+    }
 }
 ```
 

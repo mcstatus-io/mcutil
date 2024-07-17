@@ -24,11 +24,11 @@ import (
 )
 
 var (
-	// ErrPublicKeyRequired means that the server is using Votifier 1 but the PublicKey option is missing
+	// ErrPublicKeyRequired means that the server is using Votifier 1 but the PublicKey option is missing.
 	ErrPublicKeyRequired = errors.New("vote: server negotiated Votifier 1, but PublicKey option is empty")
-	// ErrInvalidPublicKey means the public key provided cannot be parsed
+	// ErrInvalidPublicKey means the public key provided cannot be parsed.
 	ErrInvalidPublicKey = errors.New("vote: invalid public key value")
-	// ErrPublicKeyRequired means that the server is using Votifier 2 but the Token option is missing
+	// ErrPublicKeyRequired means that the server is using Votifier 2 but the Token option is missing.
 	ErrTokenRequired = errors.New("vote: server negotiated Votifier 2, but Token option is empty")
 )
 

@@ -2,7 +2,7 @@ package options
 
 import "time"
 
-// Vote is the options used by the SendVote() function.
+// Vote is the options used by the vote.SendVote() function.
 type Vote struct {
 	PublicKey   string
 	ServiceName string

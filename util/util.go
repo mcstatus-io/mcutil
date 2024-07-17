@@ -6,7 +6,9 @@ import (
 )
 
 const (
-	DefaultJavaPort    = 25565
+	// DefaultJavaPort is the default port used by Minecraft Java Edition servers.
+	DefaultJavaPort = 25565
+	// DefaultBedrockPort is the default port used by Minecraft Bedrock Edition servers.
 	DefaultBedrockPort = 19132
 )
 

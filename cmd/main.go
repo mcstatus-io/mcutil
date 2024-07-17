@@ -14,10 +14,10 @@ import (
 
 var (
 	host string
-	opts Options = Options{}
+	opts passedOptions = passedOptions{}
 )
 
-type Options struct {
+type passedOptions struct {
 	Type       string `short:"t" long:"type" description:"The type of status to retrieve" default:"java"`
 	Timeout    uint   `short:"T" long:"timeout" description:"The amount of seconds before the status retrieval times out" default:"5"`
 	DisableSRV bool   `short:"S" long:"disable-srv" description:"Disables SRV lookup"`

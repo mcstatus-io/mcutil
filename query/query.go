@@ -27,8 +27,8 @@ var (
 )
 
 // Basic runs a query on the server and returns basic information.
-func Basic(ctx context.Context, host string, options ...options.Query) (*response.BasicQuery, error) {
-	r := make(chan *response.BasicQuery, 1)
+func Basic(ctx context.Context, host string, options ...options.Query) (*response.QueryBasic, error) {
+	r := make(chan *response.QueryBasic, 1)
 	e := make(chan error, 1)
 
 	go func() {
@@ -56,8 +56,8 @@ func Basic(ctx context.Context, host string, options ...options.Query) (*respons
 }
 
 // Full runs a query on the server and returns the full information.
-func Full(ctx context.Context, host string, options ...options.Query) (*response.FullQuery, error) {
-	r := make(chan *response.FullQuery, 1)
+func Full(ctx context.Context, host string, options ...options.Query) (*response.QueryFull, error) {
+	r := make(chan *response.QueryFull, 1)
 	e := make(chan error, 1)
 
 	go func() {
@@ -84,7 +84,7 @@ func Full(ctx context.Context, host string, options ...options.Query) (*response
 	}
 }
 
-func performBasicQuery(host string, options ...options.Query) (*response.BasicQuery, error) {
+func performBasicQuery(host string, options ...options.Query) (*response.QueryBasic, error) {
 	opts := parseQueryOptions(options...)
 
 	connectionPort := uint16(util.DefaultJavaPort)
@@ -144,7 +144,7 @@ func performBasicQuery(host string, options ...options.Query) (*response.BasicQu
 	return response, err
 }
 
-func performFullQuery(host string, options ...options.Query) (*response.FullQuery, error) {
+func performFullQuery(host string, options ...options.Query) (*response.QueryFull, error) {
 	opts := parseQueryOptions(options...)
 
 	connectionPort := uint16(util.DefaultJavaPort)
@@ -343,7 +343,7 @@ func writeFullStatRequest(w io.Writer, sessionID int32, challengeToken int32) er
 	return nil
 }
 
-func readBasicStatResponse(r io.Reader, sessionID int32) (*response.BasicQuery, error) {
+func readBasicStatResponse(r io.Reader, sessionID int32) (*response.QueryBasic, error) {
 	// Type - byte
 	{
 		var packetType byte
@@ -370,7 +370,7 @@ func readBasicStatResponse(r io.Reader, sessionID int32) (*response.BasicQuery, 
 		}
 	}
 
-	var response response.BasicQuery
+	var response response.QueryBasic
 
 	// MOTD - null-terminated string
 	{
@@ -470,7 +470,7 @@ func readBasicStatResponse(r io.Reader, sessionID int32) (*response.BasicQuery, 
 	return &response, nil
 }
 
-func readFullStatResponse(r io.Reader, sessionID int32) (*response.FullQuery, error) {
+func readFullStatResponse(r io.Reader, sessionID int32) (*response.QueryFull, error) {
 	// Type - byte
 	{
 		var packetType byte
@@ -506,7 +506,7 @@ func readFullStatResponse(r io.Reader, sessionID int32) (*response.FullQuery, er
 		}
 	}
 
-	response := response.FullQuery{
+	response := response.QueryFull{
 		Data:    make(map[string]string),
 		Players: make([]string, 0),
 	}

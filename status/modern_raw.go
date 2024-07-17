@@ -12,7 +12,7 @@ import (
 )
 
 // ModernRaw returns the raw status data of any 1.7+ Java Edition Minecraft server.
-func ModernRaw(ctx context.Context, host string, options ...options.JavaStatus) (map[string]interface{}, error) {
+func ModernRaw(ctx context.Context, host string, options ...options.StatusModern) (map[string]interface{}, error) {
 	r := make(chan map[string]interface{}, 1)
 	e := make(chan error, 1)
 
@@ -40,7 +40,7 @@ func ModernRaw(ctx context.Context, host string, options ...options.JavaStatus) 
 	}
 }
 
-func getStatusRaw(host string, options ...options.JavaStatus) (map[string]interface{}, error) {
+func getStatusRaw(host string, options ...options.StatusModern) (map[string]interface{}, error) {
 	opts := parseJavaStatusOptions(options...)
 
 	var (

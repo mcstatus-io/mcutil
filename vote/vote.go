@@ -51,7 +51,7 @@ type voteResponse struct {
 	Error  string `json:"error"`
 }
 
-// SendVote sends a Votifier vote to the specified Minecraft server
+// SendVote sends a Votifier vote to the specified Minecraft server.
 func SendVote(ctx context.Context, host string, port uint16, opts options.Vote) error {
 	e := make(chan error, 1)
 

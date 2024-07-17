@@ -58,7 +58,7 @@ func main() {
 	switch opts.Type {
 	case "java":
 		{
-			result, err = status.Modern(ctx, host, options.JavaStatus{
+			result, err = status.Modern(ctx, host, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -68,7 +68,7 @@ func main() {
 		}
 	case "raw":
 		{
-			result, err = status.ModernRaw(ctx, host, options.JavaStatus{
+			result, err = status.ModernRaw(ctx, host, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -78,7 +78,7 @@ func main() {
 		}
 	case "legacy":
 		{
-			result, err = status.Legacy(ctx, host, options.JavaStatusLegacy{
+			result, err = status.Legacy(ctx, host, options.StatusLegacy{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -88,7 +88,7 @@ func main() {
 		}
 	case "bedrock":
 		{
-			result, err = status.Bedrock(ctx, host, options.BedrockStatus{
+			result, err = status.Bedrock(ctx, host, options.StatusBedrock{
 				Timeout: time.Duration(opts.Timeout) * time.Second,
 			})
 

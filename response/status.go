@@ -6,7 +6,8 @@ import (
 	"github.com/mcstatus-io/mcutil/v4/formatting"
 )
 
-type JavaStatus struct {
+// StatusModern is the response data returned from performing a status lookup on a modern Minecraft Java Edition server.
+type StatusModern struct {
 	Version   Version           `json:"version"`
 	Players   Players           `json:"players"`
 	MOTD      formatting.Result `json:"motd"`
@@ -16,45 +17,54 @@ type JavaStatus struct {
 	Latency   time.Duration     `json:"-"`
 }
 
+// Players contains data about the players on the server.
 type Players struct {
 	Max    *int64         `json:"max"`
 	Online *int64         `json:"online"`
 	Sample []SamplePlayer `json:"sample"`
 }
 
+// SamplePlayer is a single player returned from sample player data of a server.
 type SamplePlayer struct {
 	ID   string            `json:"id"`
 	Name formatting.Result `json:"name"`
 }
 
+// ModInfo is the mods information of a server.
 type ModInfo struct {
 	Type string `json:"type"`
 	List []Mod  `json:"list"`
 }
 
+// Mod is a single mod returned in the mod information of a server.
 type Mod struct {
 	ID      string `json:"id"`
 	Version string `json:"version"`
 }
 
+// Version is versioning information about a Minecraft server.
 type Version struct {
 	Name     formatting.Result `json:"name"`
 	Protocol int64             `json:"protocol"`
 }
 
-type JavaStatusLegacy struct {
+// StatusLegacy is the response data returned from performing a status lookup on a legacy Minecraft Java Edition server.
+type StatusLegacy struct {
 	Version   *Version          `json:"version"`
 	Players   LegacyPlayers     `json:"players"`
 	MOTD      formatting.Result `json:"motd"`
 	SRVRecord *SRVRecord        `json:"srv_record"`
 }
 
+// LegacyPlayers is the player information returned from a legacy server. This is the
+// same as `response.Players` but without sample player data.
 type LegacyPlayers struct {
 	Online int64 `json:"online"`
 	Max    int64 `json:"max"`
 }
 
-type BedrockStatus struct {
+// StatusBedrock is the response data returned from a Minecraft Bedrock Edition server.
+type StatusBedrock struct {
 	ServerGUID      int64              `json:"server_guid"`
 	Edition         *string            `json:"edition"`
 	MOTD            *formatting.Result `json:"motd"`

@@ -17,15 +17,15 @@ import (
 )
 
 var (
-	defaultJavaStatusLegacyOptions = options.JavaStatusLegacy{
+	defaultJavaStatusLegacyOptions = options.StatusLegacy{
 		EnableSRV: true,
 		Timeout:   time.Second * 5,
 	}
 )
 
 // Legacy retrieves the status of any Java Edition Minecraft server, but with reduced properties compared to Modern().
-func Legacy(ctx context.Context, host string, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
-	r := make(chan *response.JavaStatusLegacy, 1)
+func Legacy(ctx context.Context, host string, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
+	r := make(chan *response.StatusLegacy, 1)
 	e := make(chan error, 1)
 
 	go func() {
@@ -52,7 +52,7 @@ func Legacy(ctx context.Context, host string, options ...options.JavaStatusLegac
 	}
 }
 
-func getStatusLegacy(host string, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
+func getStatusLegacy(host string, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
 	opts := parseJavaStatusLegacyOptions(options...)
 
 	var (
@@ -183,7 +183,7 @@ func getStatusLegacy(host string, options ...options.JavaStatusLegacy) (*respons
 				return nil, err
 			}
 
-			return &response.JavaStatusLegacy{
+			return &response.StatusLegacy{
 				Version: &response.Version{
 					Name:     *versionTree,
 					Protocol: protocolVersion,
@@ -223,7 +223,7 @@ func getStatusLegacy(host string, options ...options.JavaStatusLegacy) (*respons
 			return nil, err
 		}
 
-		return &response.JavaStatusLegacy{
+		return &response.StatusLegacy{
 			Version: nil,
 			Players: response.LegacyPlayers{
 				Online: onlinePlayers,
@@ -235,7 +235,7 @@ func getStatusLegacy(host string, options ...options.JavaStatusLegacy) (*respons
 	}
 }
 
-func parseJavaStatusLegacyOptions(opts ...options.JavaStatusLegacy) options.JavaStatusLegacy {
+func parseJavaStatusLegacyOptions(opts ...options.StatusLegacy) options.StatusLegacy {
 	if len(opts) < 1 {
 		return defaultJavaStatusLegacyOptions
 	}

@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	defaultBedrockStatusOptions = options.BedrockStatus{
+	defaultBedrockStatusOptions = options.StatusBedrock{
 		Timeout:    time.Second * 5,
 		ClientGUID: 0,
 	}
@@ -28,8 +28,8 @@ var (
 )
 
 // Bedrock retrieves the status of a Bedrock Edition Minecraft server.
-func Bedrock(ctx context.Context, host string, options ...options.BedrockStatus) (*response.BedrockStatus, error) {
-	r := make(chan *response.BedrockStatus, 1)
+func Bedrock(ctx context.Context, host string, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
+	r := make(chan *response.StatusBedrock, 1)
 	e := make(chan error, 1)
 
 	go func() {
@@ -56,7 +56,7 @@ func Bedrock(ctx context.Context, host string, options ...options.BedrockStatus)
 	}
 }
 
-func getStatusBedrock(host string, options ...options.BedrockStatus) (*response.BedrockStatus, error) {
+func getStatusBedrock(host string, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
 	opts := parseBedrockStatusOptions(options...)
 
 	connectionPort := uint16(util.DefaultBedrockPort)
@@ -177,7 +177,7 @@ func getStatusBedrock(host string, options ...options.BedrockStatus) (*response.
 		}
 	}
 
-	response := response.BedrockStatus{
+	response := response.StatusBedrock{
 		ServerGUID:      serverGUID,
 		Edition:         nil,
 		MOTD:            nil,
@@ -327,9 +327,9 @@ func getStatusBedrock(host string, options ...options.BedrockStatus) (*response.
 	return &response, nil
 }
 
-func parseBedrockStatusOptions(opts ...options.BedrockStatus) options.BedrockStatus {
+func parseBedrockStatusOptions(opts ...options.StatusBedrock) options.StatusBedrock {
 	if len(opts) < 1 {
-		options := options.BedrockStatus(defaultBedrockStatusOptions)
+		options := options.StatusBedrock(defaultBedrockStatusOptions)
 
 		options.ClientGUID = rand.Int63()
 

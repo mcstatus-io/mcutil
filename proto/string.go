@@ -4,6 +4,7 @@ import (
 	"io"
 )
 
+// ReadString reads a varint-prefixed string from the binary reader.
 func ReadString(r io.Reader) ([]byte, error) {
 	length, err := ReadVarInt(r)
 
@@ -20,6 +21,7 @@ func ReadString(r io.Reader) ([]byte, error) {
 	return data, nil
 }
 
+// WriteString writes a varint-prefixed string to the binary writer.
 func WriteString(val string, w io.Writer) error {
 	if err := WriteVarInt(int32(len(val)), w); err != nil {
 		return err

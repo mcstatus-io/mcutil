@@ -1,48 +1,48 @@
 package colors
 
-// Color is a Minecraft color code type
+// Color is a Minecraft color code type.
 type Color rune
 
 var (
-	// Black is Minecraft color code §0 (#000000)
+	// Black is Minecraft color code §0 (#000000).
 	Black Color = '0'
-	// DarkBlue is Minecraft color code §1 (#0000aa)
+	// DarkBlue is Minecraft color code §1 (#0000aa).
 	DarkBlue Color = '1'
-	// DarkGreen is Minecraft color code §2 (#00aa00)
+	// DarkGreen is Minecraft color code §2 (#00aa00).
 	DarkGreen Color = '2'
-	// DarkAqua is Minecraft color code §3 (#00aaaa)
+	// DarkAqua is Minecraft color code §3 (#00aaaa).
 	DarkAqua Color = '3'
-	// DarkRed is Minecraft color code §4 (#aa0000)
+	// DarkRed is Minecraft color code §4 (#aa0000).
 	DarkRed Color = '4'
-	// DarkPurple is Minecraft color code §5 (#aa00aa)
+	// DarkPurple is Minecraft color code §5 (#aa00aa).
 	DarkPurple Color = '5'
-	// Gold is Minecraft color code §6 (#ffaa00)
+	// Gold is Minecraft color code §6 (#ffaa00).
 	Gold Color = '6'
-	// Gray is Minecraft color code §7 (#aaaaaa)
+	// Gray is Minecraft color code §7 (#aaaaaa).
 	Gray Color = '7'
-	// DarkGray is Minecraft color code §8 (#555555)
+	// DarkGray is Minecraft color code §8 (#555555).
 	DarkGray Color = '8'
-	// Blue is Minecraft color code §9 (#5555ff)
+	// Blue is Minecraft color code §9 (#5555ff).
 	Blue Color = '9'
-	// Green is Minecraft color code §a (#55ff55)
+	// Green is Minecraft color code §a (#55ff55).
 	Green Color = 'a'
-	// Aqua is Minecraft color code §b (#55ffff)
+	// Aqua is Minecraft color code §b (#55ffff).
 	Aqua Color = 'b'
-	// Red is Minecraft color code §c (#ff5555)
+	// Red is Minecraft color code §c (#ff5555).
 	Red Color = 'c'
-	// LightPurple is Minecraft color code §d (#ff55ff)
+	// LightPurple is Minecraft color code §d (#ff55ff).
 	LightPurple Color = 'd'
-	// Yellow is Minecraft color code §e (#ffff55)
+	// Yellow is Minecraft color code §e (#ffff55).
 	Yellow Color = 'e'
-	// White is Minecraft color code §f (#ffffff)
+	// White is Minecraft color code §f (#ffffff).
 	White Color = 'f'
-	// MinecoinGold is Minecraft color code §g (#ddd605)
+	// MinecoinGold is Minecraft color code §g (#ddd605).
 	MinecoinGold Color = 'g'
-	// Unknown is an unknown parsed color
+	// Unknown is an unknown parsed color.
 	Unknown Color = '-'
 )
 
-// Parse attempts to return a Color type based on a color code string, color name string, or a Color type itself
+// Parse attempts to return a Color type based on a color code string, color name string, or a Color type itself.
 func Parse(value interface{}) (Color, bool) {
 	switch value {
 	case '0', "0", "black", Black:
@@ -84,12 +84,12 @@ func Parse(value interface{}) (Color, bool) {
 	}
 }
 
-// ToRaw returns the encoded Minecraft formatting of the color (§ + code)
+// ToRaw returns the encoded Minecraft formatting of the color (§ + code).
 func (c Color) ToRaw() string {
 	return "\u00A7" + string(c)
 }
 
-// ToHex returns the hex string of the color prefixed with a # symbol
+// ToHex returns the hex string of the color prefixed with a # symbol.
 func (c Color) ToHex() string {
 	switch c {
 	case Black:

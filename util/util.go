@@ -10,7 +10,7 @@ const (
 	DefaultBedrockPort = 19132
 )
 
-// LookupSRV resolves any Minecraft SRV record from the DNS of the domain
+// LookupSRV resolves any Minecraft SRV record from the DNS of the domain.
 func LookupSRV(host string) (*net.SRV, error) {
 	_, addrs, err := net.LookupSRV("minecraft", "tcp", host)
 
@@ -48,7 +48,6 @@ func ParseAddress(host string) (string, *uint16, error) {
 		return "", nil, err
 	}
 
-	// NEWPORTS???
 	newPort := uint16(parsedPort)
 
 	return hostname, &newPort, nil

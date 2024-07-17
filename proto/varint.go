@@ -11,6 +11,7 @@ var (
 	ErrVarIntTooBig = errors.New("varint: varint is too big")
 )
 
+// ReadVarInt reads a variable-length integer from the binary reader.
 func ReadVarInt(r io.Reader) (int32, error) {
 	var value int32 = 0
 	var position int = 0
@@ -37,6 +38,7 @@ func ReadVarInt(r io.Reader) (int32, error) {
 	return value, nil
 }
 
+// WriteVarInt writes a variable-length integer to the binary writer.
 func WriteVarInt(val int32, w io.Writer) error {
 	for {
 		if (val & 0x80) == 0 {

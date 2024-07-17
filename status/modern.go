@@ -18,7 +18,7 @@ import (
 	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
-var defaultJavaStatusOptions = options.JavaStatus{
+var defaultJavaStatusOptions = options.StatusModern{
 	EnableSRV:       true,
 	Timeout:         time.Second * 5,
 	ProtocolVersion: 47,
@@ -62,8 +62,8 @@ type rawJavaStatus struct {
 }
 
 // Modern retrieves the status of any 1.7+ Minecraft server.
-func Modern(ctx context.Context, host string, options ...options.JavaStatus) (*response.JavaStatus, error) {
-	r := make(chan *response.JavaStatus, 1)
+func Modern(ctx context.Context, host string, options ...options.StatusModern) (*response.StatusModern, error) {
+	r := make(chan *response.StatusModern, 1)
 	e := make(chan error, 1)
 
 	go func() {
@@ -90,7 +90,7 @@ func Modern(ctx context.Context, host string, options ...options.JavaStatus) (*r
 	}
 }
 
-func getStatusModern(host string, options ...options.JavaStatus) (*response.JavaStatus, error) {
+func getStatusModern(host string, options ...options.StatusModern) (*response.StatusModern, error) {
 	opts := parseJavaStatusOptions(options...)
 
 	var (
@@ -163,7 +163,7 @@ func getStatusModern(host string, options ...options.JavaStatus) (*response.Java
 	return formatJavaStatusResponse(rawResponse, srvRecord, latency)
 }
 
-func parseJavaStatusOptions(opts ...options.JavaStatus) options.JavaStatus {
+func parseJavaStatusOptions(opts ...options.StatusModern) options.StatusModern {
 	if len(opts) < 1 {
 		return defaultJavaStatusOptions
 	}
@@ -308,7 +308,7 @@ func readJavaStatusPongPacket(r io.Reader, payload int64) error {
 	return nil
 }
 
-func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration) (*response.JavaStatus, error) {
+func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration) (*response.StatusModern, error) {
 	motd, err := formatting.Parse(serverResponse.Description)
 
 	if err != nil {
@@ -344,7 +344,7 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 		return nil, err
 	}
 
-	result := &response.JavaStatus{
+	result := &response.StatusModern{
 		Version: response.Version{
 			Name:     *version,
 			Protocol: serverResponse.Version.Protocol,

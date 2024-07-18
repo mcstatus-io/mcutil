@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting/colors"
-	"github.com/mcstatus-io/mcutil/v3/formatting/decorators"
+	"github.com/mcstatus-io/mcutil/v4/formatting/colors"
+	"github.com/mcstatus-io/mcutil/v4/formatting/decorators"
 )
 
-// Result is a parsed structure of any Minecraft string encoded with color codes or format codes
+// Result is a parsed structure of any Minecraft string encoded with color codes or format codes.
 type Result struct {
 	Tree  []Item `json:"-"`
 	Raw   string `json:"raw"`
@@ -16,7 +16,7 @@ type Result struct {
 	HTML  string `json:"html"`
 }
 
-// Parse parses the formatting of any string or Chat object
+// Parse parses the formatting of any string or Chat object.
 func Parse(input interface{}) (*Result, error) {
 	tree, err := parseAny(input, nil)
 

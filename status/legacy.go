@@ -1,4 +1,4 @@
-package mcutil
+package status
 
 import (
 	"context"
@@ -10,25 +10,26 @@ import (
 	"time"
 	"unicode/utf16"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting"
-	"github.com/mcstatus-io/mcutil/v3/options"
-	"github.com/mcstatus-io/mcutil/v3/response"
+	"github.com/mcstatus-io/mcutil/v4/formatting"
+	"github.com/mcstatus-io/mcutil/v4/options"
+	"github.com/mcstatus-io/mcutil/v4/response"
+	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
 var (
-	defaultJavaStatusLegacyOptions = options.JavaStatusLegacy{
+	defaultJavaStatusLegacyOptions = options.StatusLegacy{
 		EnableSRV: true,
 		Timeout:   time.Second * 5,
 	}
 )
 
-// StatusLegacy retrieves the status of any Java Edition Minecraft server, but with reduced properties compared to Status()
-func StatusLegacy(ctx context.Context, host string, port uint16, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
-	r := make(chan *response.JavaStatusLegacy, 1)
+// Legacy retrieves the status of any Java Edition Minecraft server, but with reduced properties compared to Modern().
+func Legacy(ctx context.Context, host string, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
+	r := make(chan *response.StatusLegacy, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := getStatusLegacy(host, port, options...)
+		result, err := getStatusLegacy(host, options...)
 
 		if err != nil {
 			e <- err
@@ -51,26 +52,34 @@ func StatusLegacy(ctx context.Context, host string, port uint16, options ...opti
 	}
 }
 
-func getStatusLegacy(host string, port uint16, options ...options.JavaStatusLegacy) (*response.JavaStatusLegacy, error) {
-	opts := parseJavaStatusLegacyOptions(options...)
+func getStatusLegacy(host string, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
+	var (
+		opts                               = parseJavaStatusLegacyOptions(options...)
+		connectionPort uint16              = util.DefaultJavaPort
+		srvRecord      *response.SRVRecord = nil
+	)
 
-	var srvResult *response.SRVRecord = nil
+	connectionHostname, port, err := util.ParseAddress(host)
 
-	if opts.EnableSRV && port == 25565 {
-		record, err := LookupSRV("tcp", host)
+	if err != nil {
+		return nil, err
+	}
+
+	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {
+		record, err := util.LookupSRV(host)
 
 		if err == nil && record != nil {
-			host = record.Target
-			port = record.Port
+			connectionHostname = record.Target
+			connectionPort = record.Port
 
-			srvResult = &response.SRVRecord{
+			srvRecord = &response.SRVRecord{
 				Host: record.Target,
 				Port: record.Port,
 			}
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHostname, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -173,19 +182,17 @@ func getStatusLegacy(host string, port uint16, options ...options.JavaStatusLega
 				return nil, err
 			}
 
-			return &response.JavaStatusLegacy{
+			return &response.StatusLegacy{
 				Version: &response.Version{
-					NameRaw:   versionTree.Raw,
-					NameClean: versionTree.Clean,
-					NameHTML:  versionTree.HTML,
-					Protocol:  protocolVersion,
+					Name:     *versionTree,
+					Protocol: protocolVersion,
 				},
 				Players: response.LegacyPlayers{
 					Online: onlinePlayers,
 					Max:    maxPlayers,
 				},
 				MOTD:      *motd,
-				SRVResult: srvResult,
+				SRVRecord: srvRecord,
 			}, nil
 		}
 
@@ -215,19 +222,19 @@ func getStatusLegacy(host string, port uint16, options ...options.JavaStatusLega
 			return nil, err
 		}
 
-		return &response.JavaStatusLegacy{
+		return &response.StatusLegacy{
 			Version: nil,
 			Players: response.LegacyPlayers{
 				Online: onlinePlayers,
 				Max:    maxPlayers,
 			},
 			MOTD:      *motd,
-			SRVResult: srvResult,
+			SRVRecord: srvRecord,
 		}, nil
 	}
 }
 
-func parseJavaStatusLegacyOptions(opts ...options.JavaStatusLegacy) options.JavaStatusLegacy {
+func parseJavaStatusLegacyOptions(opts ...options.StatusLegacy) options.StatusLegacy {
 	if len(opts) < 1 {
 		return defaultJavaStatusLegacyOptions
 	}

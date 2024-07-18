@@ -10,17 +10,17 @@ import (
 	"net"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/options"
+	"github.com/mcstatus-io/mcutil/v4/options"
 )
 
 var (
-	// ErrNotConnected means the client attempted to send data but there was no connection to the server
+	// ErrNotConnected means the client attempted to send data but there was no connection to the server.
 	ErrNotConnected = errors.New("rcon: not connected to the server")
-	// ErrAlreadyLoggedIn means the RCON client was already logged in but a second login attempt was made
+	// ErrAlreadyLoggedIn means the RCON client was already logged in but a second login attempt was made.
 	ErrAlreadyLoggedIn = errors.New("rcon: already successfully logged in")
-	// ErrInvalidPassword means the password used in the RCON login was incorrect
+	// ErrInvalidPassword means the password used in the RCON login was incorrect.
 	ErrInvalidPassword = errors.New("rcon: incorrect password")
-	// ErrNotAuthenticated means the client attempted to execute a command before a login was successful
+	// ErrNotAuthenticated means the client attempted to execute a command before a login was successful.
 	ErrNotAuthenticated = errors.New("rcon: not authenticated with the server")
 )
 
@@ -30,7 +30,7 @@ var (
 	}
 )
 
-// Client is a client for interacting with RCON and contains multiple methods
+// Client is a client for interacting with RCON and contains multiple methods.
 type Client struct {
 	conn        net.Conn
 	Messages    chan string
@@ -39,8 +39,8 @@ type Client struct {
 	requestID   int32
 }
 
-// Connect connects to the server using the address provided and returns a new client
-func Connect(host string, port uint16, options ...options.RCON) (*Client, error) {
+// Dial connects to the server using the address provided and returns a new client.
+func Dial(host string, port uint16, options ...options.RCON) (*Client, error) {
 	opts := parseOptions(options...)
 
 	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
@@ -58,7 +58,7 @@ func Connect(host string, port uint16, options ...options.RCON) (*Client, error)
 	}, nil
 }
 
-// Login communicates authentication with the server using the plaintext password
+// Login communicates authentication with the server using the plaintext password.
 func (r *Client) Login(password string) error {
 	if r.conn == nil {
 		return ErrNotConnected
@@ -175,7 +175,7 @@ func (r *Client) Login(password string) error {
 	return nil
 }
 
-// Run executes the command on the server but does not wait for a response
+// Run executes the command on the server but does not wait for a response.
 func (r *Client) Run(command string) error {
 	if r.conn == nil {
 		return ErrNotConnected
@@ -224,7 +224,7 @@ func (r *Client) Run(command string) error {
 	return nil
 }
 
-// Execute runs the command on the server and attempts to wait for a response
+// Execute runs the command on the server and attempts to wait for a response.
 func (r *Client) Execute(ctx context.Context, command string) (string, error) {
 	if r.conn == nil {
 		return "", ErrNotConnected
@@ -248,7 +248,7 @@ func (r *Client) Execute(ctx context.Context, command string) (string, error) {
 	}
 }
 
-// Close closes the connection to the server
+// Close closes the connection to the server.
 func (r *Client) Close() error {
 	r.authSuccess = false
 	r.requestID = 0

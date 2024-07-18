@@ -1,24 +1,25 @@
 package decorators
 
-// Decorator is a type of text decorator (bold, underline, etc.)
+// Decorator is a type of text decorator (bold, underline, etc.).
 type Decorator string
 
 var (
-	// Obfuscated is a decorator used to specify text is obfuscated (§k)
+	// Obfuscated is a decorator used to specify text is obfuscated (§k).
 	Obfuscated Decorator = "obfuscated"
-	// Bold is a decorator used to specify text is bold (§k)
+	// Bold is a decorator used to specify text is bold (§k).
 	Bold Decorator = "bold"
-	// Strikethrough is a decorator used to specify text has a strikethrough (§m)
+	// Strikethrough is a decorator used to specify text has a strikethrough (§m).
 	Strikethrough Decorator = "strikethrough"
-	// Underlined is a decorator used to specify text has an underline (§n)
+	// Underlined is a decorator used to specify text has an underline (§n).
 	Underlined Decorator = "underline"
-	// Italic is a decorator used to specify text uses italics (§o)
+	// Italic is a decorator used to specify text uses italics (§o).
 	Italic Decorator = "italic"
-	// Unknown is an unknown parsed decorator
+	// Unknown is an unknown parsed decorator.
 	Unknown Decorator = "unknown"
 )
 
 var (
+	// PropertyMap is a key-value map of Minecraft property names to decorator types.
 	PropertyMap map[string]Decorator = map[string]Decorator{
 		"obfuscated":    Obfuscated,
 		"bold":          Bold,
@@ -28,6 +29,7 @@ var (
 	}
 )
 
+// ToRaw returns the Minecraft formatted text of the decorator (§ + code).
 func (d Decorator) ToRaw() string {
 	switch d {
 	case Obfuscated:
@@ -45,7 +47,7 @@ func (d Decorator) ToRaw() string {
 	}
 }
 
-// Parse attempts to return a Decorator type based on a formatting code string, formatting name string, or a Decorator type itself
+// Parse attempts to return a Decorator type based on a formatting code string, formatting name string, or a Decorator type itself.
 func Parse(value interface{}) (Decorator, bool) {
 	switch value {
 	case 'k', "k", "obfuscated", Obfuscated:

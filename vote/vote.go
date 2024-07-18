@@ -1,4 +1,4 @@
-package mcutil
+package vote
 
 import (
 	"bufio"
@@ -20,15 +20,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/options"
+	"github.com/mcstatus-io/mcutil/v4/options"
 )
 
 var (
-	// ErrPublicKeyRequired means that the server is using Votifier 1 but the PublicKey option is missing
+	// ErrPublicKeyRequired means that the server is using Votifier 1 but the PublicKey option is missing.
 	ErrPublicKeyRequired = errors.New("vote: server negotiated Votifier 1, but PublicKey option is empty")
-	// ErrInvalidPublicKey means the public key provided cannot be parsed
+	// ErrInvalidPublicKey means the public key provided cannot be parsed.
 	ErrInvalidPublicKey = errors.New("vote: invalid public key value")
-	// ErrPublicKeyRequired means that the server is using Votifier 2 but the Token option is missing
+	// ErrPublicKeyRequired means that the server is using Votifier 2 but the Token option is missing.
 	ErrTokenRequired = errors.New("vote: server negotiated Votifier 2, but Token option is empty")
 )
 
@@ -51,7 +51,7 @@ type voteResponse struct {
 	Error  string `json:"error"`
 }
 
-// SendVote sends a Votifier vote to the specified Minecraft server
+// SendVote sends a Votifier vote to the specified Minecraft server.
 func SendVote(ctx context.Context, host string, port uint16, opts options.Vote) error {
 	e := make(chan error, 1)
 

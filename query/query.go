@@ -1,4 +1,4 @@
-package mcutil
+package query
 
 import (
 	"bufio"
@@ -12,9 +12,10 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting"
-	"github.com/mcstatus-io/mcutil/v3/options"
-	"github.com/mcstatus-io/mcutil/v3/response"
+	"github.com/mcstatus-io/mcutil/v4/formatting"
+	"github.com/mcstatus-io/mcutil/v4/options"
+	"github.com/mcstatus-io/mcutil/v4/response"
+	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
 var (
@@ -25,13 +26,13 @@ var (
 	magic = []byte{0xFE, 0xFD}
 )
 
-// BasicQuery runs a query on the server and returns basic information
-func BasicQuery(ctx context.Context, host string, port uint16, options ...options.Query) (*response.BasicQuery, error) {
-	r := make(chan *response.BasicQuery, 1)
+// Basic runs a query on the server and returns basic information.
+func Basic(ctx context.Context, host string, options ...options.Query) (*response.QueryBasic, error) {
+	r := make(chan *response.QueryBasic, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := performBasicQuery(host, port, options...)
+		result, err := performBasicQuery(host, options...)
 
 		if err != nil {
 			e <- err
@@ -54,13 +55,13 @@ func BasicQuery(ctx context.Context, host string, port uint16, options ...option
 	}
 }
 
-// FullQuery runs a query on the server and returns the full information
-func FullQuery(ctx context.Context, host string, port uint16, options ...options.Query) (*response.FullQuery, error) {
-	r := make(chan *response.FullQuery, 1)
+// Full runs a query on the server and returns the full information.
+func Full(ctx context.Context, host string, options ...options.Query) (*response.QueryFull, error) {
+	r := make(chan *response.QueryFull, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := performFullQuery(host, port, options...)
+		result, err := performFullQuery(host, options...)
 
 		if err != nil {
 			e <- err
@@ -83,10 +84,22 @@ func FullQuery(ctx context.Context, host string, port uint16, options ...options
 	}
 }
 
-func performBasicQuery(host string, port uint16, options ...options.Query) (*response.BasicQuery, error) {
+func performBasicQuery(host string, options ...options.Query) (*response.QueryBasic, error) {
 	opts := parseQueryOptions(options...)
 
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	connectionPort := uint16(util.DefaultJavaPort)
+
+	connectionHost, port, err := util.ParseAddress(host)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if port != nil {
+		connectionPort = *port
+	}
+
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -102,13 +115,13 @@ func performBasicQuery(host string, port uint16, options ...options.Query) (*res
 
 	// Handshake request packet
 	// https://wiki.vg/Query#Request
-	if err = writeQueryHandshakeRequestPacket(conn, opts.SessionID); err != nil {
+	if err = writeHandshakeRequest(conn, opts.SessionID); err != nil {
 		return nil, err
 	}
 
 	// Handshake response packet
 	// https://wiki.vg/Query#Response
-	challengeToken, err := readQueryHandshakeResponsePacket(r, opts.SessionID)
+	challengeToken, err := readHandshakeResponse(r, opts.SessionID)
 
 	if err != nil {
 		return nil, err
@@ -116,13 +129,13 @@ func performBasicQuery(host string, port uint16, options ...options.Query) (*res
 
 	// Basic stat request packet
 	// https://wiki.vg/Query#Request_2
-	if err = writeQueryBasicStatRequestPacket(conn, opts.SessionID, challengeToken); err != nil {
+	if err = writeBasicStatRequest(conn, opts.SessionID, challengeToken); err != nil {
 		return nil, err
 	}
 
 	// Basic stat response packet
 	// https://wiki.vg/Query#Response_2
-	response, err := readQueryBasicStatResponsePacket(r, opts.SessionID)
+	response, err := readBasicStatResponse(r, opts.SessionID)
 
 	if err != nil {
 		return nil, err
@@ -131,10 +144,22 @@ func performBasicQuery(host string, port uint16, options ...options.Query) (*res
 	return response, err
 }
 
-func performFullQuery(host string, port uint16, options ...options.Query) (*response.FullQuery, error) {
+func performFullQuery(host string, options ...options.Query) (*response.QueryFull, error) {
 	opts := parseQueryOptions(options...)
 
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	connectionPort := uint16(util.DefaultJavaPort)
+
+	connectionHost, port, err := util.ParseAddress(host)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if port != nil {
+		connectionPort = *port
+	}
+
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -150,13 +175,13 @@ func performFullQuery(host string, port uint16, options ...options.Query) (*resp
 
 	// Handshake request packet
 	// https://wiki.vg/Query#Request
-	if err = writeQueryHandshakeRequestPacket(conn, opts.SessionID); err != nil {
+	if err = writeHandshakeRequest(conn, opts.SessionID); err != nil {
 		return nil, err
 	}
 
 	// Handshake response packet
 	// https://wiki.vg/Query#Response
-	challengeToken, err := readQueryHandshakeResponsePacket(r, opts.SessionID)
+	challengeToken, err := readHandshakeResponse(r, opts.SessionID)
 
 	if err != nil {
 		return nil, err
@@ -164,13 +189,13 @@ func performFullQuery(host string, port uint16, options ...options.Query) (*resp
 
 	// Full stat request packet
 	// https://wiki.vg/Query#Request_3
-	if err = writeQueryFullStatRequestPacket(conn, opts.SessionID, challengeToken); err != nil {
+	if err = writeFullStatRequest(conn, opts.SessionID, challengeToken); err != nil {
 		return nil, err
 	}
 
 	// Full stat response packet
 	// https://wiki.vg/Query#Response_3
-	response, err := readQueryFullStatResponsePacket(r, opts.SessionID)
+	response, err := readFullStatResponse(r, opts.SessionID)
 
 	if err != nil {
 		return nil, err
@@ -179,7 +204,7 @@ func performFullQuery(host string, port uint16, options ...options.Query) (*resp
 	return response, err
 }
 
-func writeQueryHandshakeRequestPacket(w io.Writer, sessionID int32) error {
+func writeHandshakeRequest(w io.Writer, sessionID int32) error {
 	buf := &bytes.Buffer{}
 
 	// Magic - uint16
@@ -204,7 +229,7 @@ func writeQueryHandshakeRequestPacket(w io.Writer, sessionID int32) error {
 	return nil
 }
 
-func readQueryHandshakeResponsePacket(r io.Reader, sessionID int32) (int32, error) {
+func readHandshakeResponse(r io.Reader, sessionID int32) (int32, error) {
 	// Type - byte
 	{
 		var packetType byte
@@ -253,7 +278,7 @@ func readQueryHandshakeResponsePacket(r io.Reader, sessionID int32) (int32, erro
 	return challengeToken, nil
 }
 
-func writeQueryBasicStatRequestPacket(w io.Writer, sessionID int32, challengeToken int32) error {
+func writeBasicStatRequest(w io.Writer, sessionID int32, challengeToken int32) error {
 	buf := &bytes.Buffer{}
 
 	// Magic - uint16
@@ -283,7 +308,7 @@ func writeQueryBasicStatRequestPacket(w io.Writer, sessionID int32, challengeTok
 	return nil
 }
 
-func writeQueryFullStatRequestPacket(w io.Writer, sessionID int32, challengeToken int32) error {
+func writeFullStatRequest(w io.Writer, sessionID int32, challengeToken int32) error {
 	buf := &bytes.Buffer{}
 
 	// Magic - uint16
@@ -318,7 +343,7 @@ func writeQueryFullStatRequestPacket(w io.Writer, sessionID int32, challengeToke
 	return nil
 }
 
-func readQueryBasicStatResponsePacket(r io.Reader, sessionID int32) (*response.BasicQuery, error) {
+func readBasicStatResponse(r io.Reader, sessionID int32) (*response.QueryBasic, error) {
 	// Type - byte
 	{
 		var packetType byte
@@ -345,7 +370,7 @@ func readQueryBasicStatResponsePacket(r io.Reader, sessionID int32) (*response.B
 		}
 	}
 
-	var response response.BasicQuery
+	var response response.QueryBasic
 
 	// MOTD - null-terminated string
 	{
@@ -445,7 +470,7 @@ func readQueryBasicStatResponsePacket(r io.Reader, sessionID int32) (*response.B
 	return &response, nil
 }
 
-func readQueryFullStatResponsePacket(r io.Reader, sessionID int32) (*response.FullQuery, error) {
+func readFullStatResponse(r io.Reader, sessionID int32) (*response.QueryFull, error) {
 	// Type - byte
 	{
 		var packetType byte
@@ -481,7 +506,7 @@ func readQueryFullStatResponsePacket(r io.Reader, sessionID int32) (*response.Fu
 		}
 	}
 
-	response := response.FullQuery{
+	response := response.QueryFull{
 		Data:    make(map[string]string),
 		Players: make([]string, 0),
 	}

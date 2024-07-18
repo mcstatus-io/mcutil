@@ -5,18 +5,18 @@ import (
 	"html"
 	"strings"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting/colors"
-	"github.com/mcstatus-io/mcutil/v3/formatting/decorators"
+	"github.com/mcstatus-io/mcutil/v4/formatting/colors"
+	"github.com/mcstatus-io/mcutil/v4/formatting/decorators"
 )
 
-// Item is a single formatting item that contains a color and any optional formatting controls
+// Item is a single formatting item that contains a color and any optional formatting controls.
 type Item struct {
 	Text       string                 `json:"text"`
 	Color      *colors.Color          `json:"color,omitempty"`
 	Decorators []decorators.Decorator `json:"decorators"`
 }
 
-// Raw returns the Minecraft encoding of the formatting (§ + formatting codes/color + text)
+// Raw returns the Minecraft encoding of the formatting (§ + formatting codes/color + text).
 func (i Item) Raw() (result string) {
 
 	if i.Color != nil {
@@ -32,7 +32,7 @@ func (i Item) Raw() (result string) {
 	return
 }
 
-// Clean returns the text only of the formatting item
+// Clean returns the text only of the formatting item.
 func (i Item) Clean() string {
 	return i.Text
 }

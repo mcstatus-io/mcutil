@@ -4,24 +4,23 @@ import (
 	"time"
 )
 
-// JavaStatus is the options used by the Status() function
-type JavaStatus struct {
+// StatusModern is the options used by the status.Modern() function.
+type StatusModern struct {
 	EnableSRV       bool
 	Timeout         time.Duration
 	ProtocolVersion int
 	Ping            bool
 }
 
-// JavaStatusLegacy is the options used by the StatusLegacy() function
-type JavaStatusLegacy struct {
+// StatusLegacy is the options used by the status.Legacy() function.
+type StatusLegacy struct {
 	EnableSRV       bool
 	Timeout         time.Duration
 	ProtocolVersion int
 }
 
-// BedrockStatus is the options used by the StatusBedrock() function
-type BedrockStatus struct {
-	EnableSRV  bool
+// StatusBedrock is the options used by the status.Bedrock() function.
+type StatusBedrock struct {
 	Timeout    time.Duration
 	ClientGUID int64
 }

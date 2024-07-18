@@ -5,21 +5,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/jessevdk/go-flags"
-	"github.com/mcstatus-io/mcutil/v3"
-	"github.com/mcstatus-io/mcutil/v3/options"
+	"github.com/mcstatus-io/mcutil/v4/options"
+	"github.com/mcstatus-io/mcutil/v4/status"
 )
 
 var (
 	host string
-	port uint16
-	opts Options = Options{}
+	opts passedOptions = passedOptions{}
 )
 
-type Options struct {
+type passedOptions struct {
 	Type       string `short:"t" long:"type" description:"The type of status to retrieve" default:"java"`
 	Timeout    uint   `short:"T" long:"timeout" description:"The amount of seconds before the status retrieval times out" default:"5"`
 	DisableSRV bool   `short:"S" long:"disable-srv" description:"Disables SRV lookup"`
@@ -45,35 +43,6 @@ func init() {
 	}
 
 	host = args[0]
-
-	if len(args) < 2 {
-		switch opts.Type {
-		case "java", "legacy", "raw":
-			{
-				port = 25565
-
-				break
-			}
-		case "bedrock":
-			{
-				port = 19132
-
-				break
-			}
-		default:
-			{
-				fmt.Printf("unknown --type value: %s\n", opts.Type)
-			}
-		}
-	} else {
-		value, err := strconv.ParseUint(args[1], 10, 16)
-
-		if err != nil {
-			panic(err)
-		}
-
-		port = uint16(value)
-	}
 }
 
 func main() {
@@ -89,7 +58,7 @@ func main() {
 	switch opts.Type {
 	case "java":
 		{
-			result, err = mcutil.Status(ctx, host, port, options.JavaStatus{
+			result, err = status.Modern(ctx, host, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -99,7 +68,7 @@ func main() {
 		}
 	case "raw":
 		{
-			result, err = mcutil.StatusRaw(ctx, host, port, options.JavaStatus{
+			result, err = status.ModernRaw(ctx, host, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -109,7 +78,7 @@ func main() {
 		}
 	case "legacy":
 		{
-			result, err = mcutil.StatusLegacy(ctx, host, port, options.JavaStatusLegacy{
+			result, err = status.Legacy(ctx, host, options.StatusLegacy{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -119,12 +88,17 @@ func main() {
 		}
 	case "bedrock":
 		{
-			result, err = mcutil.StatusBedrock(ctx, host, port, options.BedrockStatus{
-				EnableSRV: !opts.DisableSRV,
-				Timeout:   time.Duration(opts.Timeout) * time.Second,
+			result, err = status.Bedrock(ctx, host, options.StatusBedrock{
+				Timeout: time.Duration(opts.Timeout) * time.Second,
 			})
 
 			break
+		}
+	default:
+		{
+			fmt.Printf("unknown --type value: %s\n", opts.Type)
+
+			return
 		}
 	}
 

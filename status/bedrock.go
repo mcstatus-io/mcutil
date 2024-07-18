@@ -1,4 +1,4 @@
-package mcutil
+package status
 
 import (
 	"bufio"
@@ -13,27 +13,27 @@ import (
 	"strings"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting"
-	"github.com/mcstatus-io/mcutil/v3/options"
-	"github.com/mcstatus-io/mcutil/v3/response"
+	"github.com/mcstatus-io/mcutil/v4/formatting"
+	"github.com/mcstatus-io/mcutil/v4/options"
+	"github.com/mcstatus-io/mcutil/v4/response"
+	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
 var (
-	defaultBedrockStatusOptions = options.BedrockStatus{
-		EnableSRV:  true,
+	defaultBedrockStatusOptions = options.StatusBedrock{
 		Timeout:    time.Second * 5,
 		ClientGUID: 0,
 	}
 	bedrockMagic = []byte{0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78}
 )
 
-// StatusBedrock retrieves the status of a Bedrock Minecraft server
-func StatusBedrock(ctx context.Context, host string, port uint16, options ...options.BedrockStatus) (*response.BedrockStatus, error) {
-	r := make(chan *response.BedrockStatus, 1)
+// Bedrock retrieves the status of a Bedrock Edition Minecraft server.
+func Bedrock(ctx context.Context, host string, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
+	r := make(chan *response.StatusBedrock, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := getStatusBedrock(host, port, options...)
+		result, err := getStatusBedrock(host, options...)
 
 		if err != nil {
 			e <- err
@@ -56,26 +56,23 @@ func StatusBedrock(ctx context.Context, host string, port uint16, options ...opt
 	}
 }
 
-func getStatusBedrock(host string, port uint16, options ...options.BedrockStatus) (*response.BedrockStatus, error) {
-	opts := parseBedrockStatusOptions(options...)
+func getStatusBedrock(host string, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
+	var (
+		opts                  = parseBedrockStatusOptions(options...)
+		connectionPort uint16 = uint16(util.DefaultBedrockPort)
+	)
 
-	var srvResult *response.SRVRecord = nil
+	connectionHostname, port, err := util.ParseAddress(host)
 
-	if opts.EnableSRV && port == 19132 {
-		record, err := LookupSRV("udp", host)
-
-		if err == nil && record != nil {
-			host = record.Target
-			port = record.Port
-
-			srvResult = &response.SRVRecord{
-				Host: record.Target,
-				Port: record.Port,
-			}
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	if port != nil {
+		connectionPort = *port
+	}
+
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHostname, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -181,7 +178,7 @@ func getStatusBedrock(host string, port uint16, options ...options.BedrockStatus
 		}
 	}
 
-	response := response.BedrockStatus{
+	response := response.StatusBedrock{
 		ServerGUID:      serverGUID,
 		Edition:         nil,
 		MOTD:            nil,
@@ -194,7 +191,6 @@ func getStatusBedrock(host string, port uint16, options ...options.BedrockStatus
 		GamemodeID:      nil,
 		PortIPv4:        nil,
 		PortIPv6:        nil,
-		SRVResult:       srvResult,
 	}
 
 	splitID := strings.Split(serverID, ";")
@@ -332,9 +328,9 @@ func getStatusBedrock(host string, port uint16, options ...options.BedrockStatus
 	return &response, nil
 }
 
-func parseBedrockStatusOptions(opts ...options.BedrockStatus) options.BedrockStatus {
+func parseBedrockStatusOptions(opts ...options.StatusBedrock) options.StatusBedrock {
 	if len(opts) < 1 {
-		options := options.BedrockStatus(defaultBedrockStatusOptions)
+		options := options.StatusBedrock(defaultBedrockStatusOptions)
 
 		options.ClientGUID = rand.Int63()
 

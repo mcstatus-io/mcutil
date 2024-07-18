@@ -1,4 +1,4 @@
-package mcutil
+package status
 
 import (
 	"bytes"
@@ -11,12 +11,14 @@ import (
 	"net"
 	"time"
 
-	"github.com/mcstatus-io/mcutil/v3/formatting"
-	"github.com/mcstatus-io/mcutil/v3/options"
-	"github.com/mcstatus-io/mcutil/v3/response"
+	"github.com/mcstatus-io/mcutil/v4/formatting"
+	"github.com/mcstatus-io/mcutil/v4/options"
+	"github.com/mcstatus-io/mcutil/v4/proto"
+	"github.com/mcstatus-io/mcutil/v4/response"
+	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
-var defaultJavaStatusOptions = options.JavaStatus{
+var defaultJavaStatusOptions = options.StatusModern{
 	EnableSRV:       true,
 	Timeout:         time.Second * 5,
 	ProtocolVersion: 47,
@@ -59,13 +61,13 @@ type rawJavaStatus struct {
 	} `json:"forgeData"`
 }
 
-// Status retrieves the status of any 1.7+ Minecraft server
-func Status(ctx context.Context, host string, port uint16, options ...options.JavaStatus) (*response.JavaStatus, error) {
-	r := make(chan *response.JavaStatus, 1)
+// Modern retrieves the status of any 1.7+ Minecraft server.
+func Modern(ctx context.Context, host string, options ...options.StatusModern) (*response.StatusModern, error) {
+	r := make(chan *response.StatusModern, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := getStatus(host, port, options...)
+		result, err := getStatusModern(host, options...)
 
 		if err != nil {
 			e <- err
@@ -88,20 +90,26 @@ func Status(ctx context.Context, host string, port uint16, options ...options.Ja
 	}
 }
 
-func getStatus(host string, port uint16, options ...options.JavaStatus) (*response.JavaStatus, error) {
-	opts := parseJavaStatusOptions(options...)
-
+func getStatusModern(host string, options ...options.StatusModern) (*response.StatusModern, error) {
 	var (
-		connectionHost string              = host
-		connectionPort uint16              = port
+		opts                               = parseJavaStatusOptions(options...)
+		connectionPort uint16              = util.DefaultJavaPort
 		srvRecord      *response.SRVRecord = nil
+		rawResponse    rawJavaStatus       = rawJavaStatus{}
+		latency        time.Duration       = 0
 	)
 
-	if opts.EnableSRV && port == 25565 {
-		record, err := LookupSRV("tcp", host)
+	connectionHostname, port, err := util.ParseAddress(host)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {
+		record, err := util.LookupSRV(host)
 
 		if err == nil && record != nil {
-			connectionHost = record.Target
+			connectionHostname = record.Target
 			connectionPort = record.Port
 
 			srvRecord = &response.SRVRecord{
@@ -111,7 +119,7 @@ func getStatus(host string, port uint16, options ...options.JavaStatus) (*respon
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHostname, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -123,7 +131,7 @@ func getStatus(host string, port uint16, options ...options.JavaStatus) (*respon
 		return nil, err
 	}
 
-	if err = writeJavaStatusHandshakeRequestPacket(conn, int32(opts.ProtocolVersion), host, port); err != nil {
+	if err = writeJavaStatusHandshakeRequestPacket(conn, int32(opts.ProtocolVersion), connectionHostname, connectionPort); err != nil {
 		return nil, err
 	}
 
@@ -131,13 +139,9 @@ func getStatus(host string, port uint16, options ...options.JavaStatus) (*respon
 		return nil, err
 	}
 
-	var serverResponse rawJavaStatus
-
-	if err = readJavaStatusStatusResponsePacket(conn, &serverResponse); err != nil {
+	if err = readJavaStatusStatusResponsePacket(conn, &rawResponse); err != nil {
 		return nil, err
 	}
-
-	var latency time.Duration = 0
 
 	if opts.Ping {
 		payload := rand.Int63()
@@ -155,10 +159,10 @@ func getStatus(host string, port uint16, options ...options.JavaStatus) (*respon
 		latency = time.Since(pingStart)
 	}
 
-	return formatJavaStatusResponse(serverResponse, srvRecord, latency)
+	return formatJavaStatusResponse(rawResponse, srvRecord, latency)
 }
 
-func parseJavaStatusOptions(opts ...options.JavaStatus) options.JavaStatus {
+func parseJavaStatusOptions(opts ...options.StatusModern) options.StatusModern {
 	if len(opts) < 1 {
 		return defaultJavaStatusOptions
 	}
@@ -171,17 +175,17 @@ func writeJavaStatusHandshakeRequestPacket(w io.Writer, protocolVersion int32, h
 	buf := &bytes.Buffer{}
 
 	// Packet ID - varint
-	if err := writeVarInt(0x00, buf); err != nil {
+	if err := proto.WriteVarInt(0x00, buf); err != nil {
 		return err
 	}
 
 	// Protocol version - varint
-	if err := writeVarInt(protocolVersion, buf); err != nil {
+	if err := proto.WriteVarInt(protocolVersion, buf); err != nil {
 		return err
 	}
 
 	// Host - string
-	if err := writeString(host, buf); err != nil {
+	if err := proto.WriteString(host, buf); err != nil {
 		return err
 	}
 
@@ -191,7 +195,7 @@ func writeJavaStatusHandshakeRequestPacket(w io.Writer, protocolVersion int32, h
 	}
 
 	// Next state - varint
-	if err := writeVarInt(1, buf); err != nil {
+	if err := proto.WriteVarInt(1, buf); err != nil {
 		return err
 	}
 
@@ -203,7 +207,7 @@ func writeJavaStatusStatusRequestPacket(w io.Writer) error {
 	buf := &bytes.Buffer{}
 
 	// Packet ID - varint
-	if err := writeVarInt(0x00, buf); err != nil {
+	if err := proto.WriteVarInt(0x00, buf); err != nil {
 		return err
 	}
 
@@ -214,14 +218,14 @@ func writeJavaStatusStatusRequestPacket(w io.Writer) error {
 func readJavaStatusStatusResponsePacket(r io.Reader, result interface{}) error {
 	// Packet length - varint
 	{
-		if _, err := readVarInt(r); err != nil {
+		if _, err := proto.ReadVarInt(r); err != nil {
 			return err
 		}
 	}
 
 	// Packet type - varint
 	{
-		packetType, err := readVarInt(r)
+		packetType, err := proto.ReadVarInt(r)
 
 		if err != nil {
 			return err
@@ -234,7 +238,7 @@ func readJavaStatusStatusResponsePacket(r io.Reader, result interface{}) error {
 
 	// Data - string
 	{
-		data, err := readString(r)
+		data, err := proto.ReadString(r)
 
 		if err != nil {
 			return err
@@ -253,7 +257,7 @@ func writeJavaStatusPingPacket(w io.Writer, payload int64) error {
 	buf := &bytes.Buffer{}
 
 	// Packet ID - varint
-	if err := writeVarInt(0x01, buf); err != nil {
+	if err := proto.WriteVarInt(0x01, buf); err != nil {
 		return err
 	}
 
@@ -269,14 +273,14 @@ func writeJavaStatusPingPacket(w io.Writer, payload int64) error {
 func readJavaStatusPongPacket(r io.Reader, payload int64) error {
 	// Packet length - varint
 	{
-		if _, err := readVarInt(r); err != nil {
+		if _, err := proto.ReadVarInt(r); err != nil {
 			return err
 		}
 	}
 
 	// Packet type - varint
 	{
-		packetType, err := readVarInt(r)
+		packetType, err := proto.ReadVarInt(r)
 
 		if err != nil {
 			return err
@@ -303,7 +307,7 @@ func readJavaStatusPongPacket(r io.Reader, payload int64) error {
 	return nil
 }
 
-func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration) (*response.JavaStatus, error) {
+func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.SRVRecord, latency time.Duration) (*response.StatusModern, error) {
 	motd, err := formatting.Parse(serverResponse.Description)
 
 	if err != nil {
@@ -327,10 +331,8 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 			}
 
 			samplePlayers = append(samplePlayers, response.SamplePlayer{
-				ID:        uuid,
-				NameRaw:   name.Raw,
-				NameClean: name.Clean,
-				NameHTML:  name.HTML,
+				ID:   uuid,
+				Name: *name,
 			})
 		}
 	}
@@ -341,12 +343,10 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 		return nil, err
 	}
 
-	result := &response.JavaStatus{
+	result := &response.StatusModern{
 		Version: response.Version{
-			NameRaw:   version.Raw,
-			NameClean: version.Clean,
-			NameHTML:  version.HTML,
-			Protocol:  serverResponse.Version.Protocol,
+			Name:     *version,
+			Protocol: serverResponse.Version.Protocol,
 		},
 		Players: response.Players{
 			Online: serverResponse.Players.Online,
@@ -355,9 +355,9 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 		},
 		MOTD:      *motd,
 		Favicon:   serverResponse.Favicon,
-		SRVResult: srvRecord,
+		SRVRecord: srvRecord,
 		Latency:   latency,
-		ModInfo:   nil,
+		Mods:      nil,
 	}
 
 	if len(serverResponse.ModInfo.Type) > 0 {
@@ -370,9 +370,9 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 			})
 		}
 
-		result.ModInfo = &response.ModInfo{
+		result.Mods = &response.ModInfo{
 			Type: serverResponse.ModInfo.Type,
-			Mods: mods,
+			List: mods,
 		}
 	}
 
@@ -386,9 +386,9 @@ func formatJavaStatusResponse(serverResponse rawJavaStatus, srvRecord *response.
 			})
 		}
 
-		result.ModInfo = &response.ModInfo{
+		result.Mods = &response.ModInfo{
 			Type: "FML2",
-			Mods: mods,
+			List: mods,
 		}
 	}
 

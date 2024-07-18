@@ -41,32 +41,29 @@ func ModernRaw(ctx context.Context, host string, options ...options.StatusModern
 }
 
 func getStatusRaw(host string, options ...options.StatusModern) (map[string]interface{}, error) {
-	opts := parseJavaStatusOptions(options...)
-
 	var (
+		opts                                  = parseJavaStatusOptions(options...)
 		connectionPort uint16                 = util.DefaultJavaPort
 		result         map[string]interface{} = make(map[string]interface{})
 		payload        int64                  = rand.Int63()
 	)
 
-	// Parse the provided host into a split hostname and port.
-	connectionHost, port, err := util.ParseAddress(host)
+	connectionHostname, port, err := util.ParseAddress(host)
 
 	if err != nil {
 		return nil, err
 	}
 
-	// Perform an SRV lookup on the
-	if opts.EnableSRV && port == nil && net.ParseIP(connectionHost) == nil {
+	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {
 		record, err := util.LookupSRV(host)
 
 		if err == nil && record != nil {
-			connectionHost = record.Target
+			connectionHostname = record.Target
 			connectionPort = record.Port
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHostname, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err
@@ -78,7 +75,7 @@ func getStatusRaw(host string, options ...options.StatusModern) (map[string]inte
 		return nil, err
 	}
 
-	if err = writeJavaStatusHandshakeRequestPacket(conn, int32(opts.ProtocolVersion), host, connectionPort); err != nil {
+	if err = writeJavaStatusHandshakeRequestPacket(conn, int32(opts.ProtocolVersion), connectionHostname, connectionPort); err != nil {
 		return nil, err
 	}
 

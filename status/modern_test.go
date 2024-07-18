@@ -8,7 +8,7 @@ import (
 )
 
 func TestModern(t *testing.T) {
-	resp, err := status.Modern(context.Background(), "demo.mcstatus.io")
+	resp, err := status.Modern(context.Background(), "play.cobbletwo.com")
 
 	if err != nil {
 		t.Fatal(err)

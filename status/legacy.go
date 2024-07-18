@@ -53,24 +53,23 @@ func Legacy(ctx context.Context, host string, options ...options.StatusLegacy) (
 }
 
 func getStatusLegacy(host string, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
-	opts := parseJavaStatusLegacyOptions(options...)
-
 	var (
+		opts                               = parseJavaStatusLegacyOptions(options...)
 		connectionPort uint16              = util.DefaultJavaPort
 		srvRecord      *response.SRVRecord = nil
 	)
 
-	connectionHost, port, err := util.ParseAddress(host)
+	connectionHostname, port, err := util.ParseAddress(host)
 
 	if err != nil {
 		return nil, err
 	}
 
-	if opts.EnableSRV && port == nil && net.ParseIP(connectionHost) == nil {
+	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {
 		record, err := util.LookupSRV(host)
 
 		if err == nil && record != nil {
-			connectionHost = record.Target
+			connectionHostname = record.Target
 			connectionPort = record.Port
 
 			srvRecord = &response.SRVRecord{
@@ -80,7 +79,7 @@ func getStatusLegacy(host string, options ...options.StatusLegacy) (*response.St
 		}
 	}
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", connectionHostname, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err

@@ -57,11 +57,12 @@ func Bedrock(ctx context.Context, host string, options ...options.StatusBedrock)
 }
 
 func getStatusBedrock(host string, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
-	opts := parseBedrockStatusOptions(options...)
+	var (
+		opts                  = parseBedrockStatusOptions(options...)
+		connectionPort uint16 = uint16(util.DefaultBedrockPort)
+	)
 
-	connectionPort := uint16(util.DefaultBedrockPort)
-
-	connectionHost, port, err := util.ParseAddress(host)
+	connectionHostname, port, err := util.ParseAddress(host)
 
 	if err != nil {
 		return nil, err
@@ -71,7 +72,7 @@ func getStatusBedrock(host string, options ...options.StatusBedrock) (*response.
 		connectionPort = *port
 	}
 
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHost, connectionPort), opts.Timeout)
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHostname, connectionPort), opts.Timeout)
 
 	if err != nil {
 		return nil, err

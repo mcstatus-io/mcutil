@@ -21,6 +21,7 @@ type passedOptions struct {
 	Type       string `short:"t" long:"type" description:"The type of status to retrieve" default:"java"`
 	Timeout    uint   `short:"T" long:"timeout" description:"The amount of seconds before the status retrieval times out" default:"5"`
 	DisableSRV bool   `short:"S" long:"disable-srv" description:"Disables SRV lookup"`
+	Debug      bool   `short:"D" long:"debug" description:"Enables debug printing to the console"`
 }
 
 func init() {
@@ -62,6 +63,8 @@ func main() {
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
+				Ping:            true,
+				Debug:           opts.Debug,
 			})
 
 			break

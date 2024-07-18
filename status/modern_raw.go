@@ -75,7 +75,7 @@ func getStatusRaw(host string, options ...options.StatusModern) (map[string]inte
 		return nil, err
 	}
 
-	if err = writeJavaStatusHandshakeRequestPacket(conn, int32(opts.ProtocolVersion), connectionHostname, connectionPort); err != nil {
+	if err = writeJavaStatusHandshakePacket(conn, int32(opts.ProtocolVersion), connectionHostname, connectionPort); err != nil {
 		return nil, err
 	}
 

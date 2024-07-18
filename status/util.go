@@ -54,3 +54,11 @@ func parsePlayerID(value interface{}) (string, bool) {
 func pointerOf[T any](v T) *T {
 	return &v
 }
+
+func nilValueSwap[T any](a *T, b T) T {
+	if a == nil {
+		return b
+	}
+
+	return *a
+}

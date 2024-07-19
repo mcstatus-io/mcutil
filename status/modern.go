@@ -111,7 +111,7 @@ func getStatusModern(host string, options ...options.StatusModern) (*response.St
 	connectionHostname = hostname
 
 	if opts.Debug {
-		log.Printf("Parsed address into split hostname and port (host=%s, port=%v, default_port=%d)", connectionHostname, connectionPort, util.DefaultJavaPort)
+		log.Printf("Parsed address into split hostname and port (host=%s, port=%v, default_port=%d)", connectionHostname, nilValueSwap(port, util.DefaultJavaPort), util.DefaultJavaPort)
 	}
 
 	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {

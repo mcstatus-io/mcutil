@@ -10,6 +10,7 @@ type StatusModern struct {
 	Timeout         time.Duration
 	ProtocolVersion int
 	Ping            bool
+	Debug           bool
 }
 
 // StatusLegacy is the options used by the status.Legacy() function.

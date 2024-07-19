@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"math/rand"
 	"net"
 	"time"
@@ -21,8 +22,9 @@ import (
 var defaultJavaStatusOptions = options.StatusModern{
 	EnableSRV:       true,
 	Timeout:         time.Second * 5,
-	ProtocolVersion: 47,
+	ProtocolVersion: -1,
 	Ping:            true,
+	Debug:           false,
 }
 
 type rawJavaStatus struct {
@@ -92,17 +94,28 @@ func Modern(ctx context.Context, host string, options ...options.StatusModern) (
 
 func getStatusModern(host string, options ...options.StatusModern) (*response.StatusModern, error) {
 	var (
-		opts                               = parseJavaStatusOptions(options...)
-		connectionPort uint16              = util.DefaultJavaPort
-		srvRecord      *response.SRVRecord = nil
-		rawResponse    rawJavaStatus       = rawJavaStatus{}
-		latency        time.Duration       = 0
+		opts                                   = parseJavaStatusOptions(options...)
+		connectionHostname string              = ""
+		connectionPort     uint16              = util.DefaultJavaPort
+		srvRecord          *response.SRVRecord = nil
+		rawResponse        rawJavaStatus       = rawJavaStatus{}
+		latency            time.Duration       = 0
 	)
 
-	connectionHostname, port, err := util.ParseAddress(host)
+	hostname, port, err := util.ParseAddress(host)
 
 	if err != nil {
 		return nil, err
+	}
+
+	connectionHostname = hostname
+
+	if port != nil {
+		connectionPort = *port
+	}
+
+	if opts.Debug {
+		log.Printf("Parsed address into split hostname and port (host=%s, port=%v, default_port=%d)", connectionHostname, nilValueSwap(port, util.DefaultJavaPort), util.DefaultJavaPort)
 	}
 
 	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {
@@ -116,6 +129,12 @@ func getStatusModern(host string, options ...options.StatusModern) (*response.St
 				Host: record.Target,
 				Port: record.Port,
 			}
+
+			if opts.Debug {
+				log.Printf("Found an SRV record (target_host=%s, target_port=%d)", record.Target, record.Port)
+			}
+		} else if opts.Debug {
+			log.Println("Could not find an SRV record for this host")
 		}
 	}
 
@@ -125,22 +144,38 @@ func getStatusModern(host string, options ...options.StatusModern) (*response.St
 		return nil, err
 	}
 
+	if opts.Debug {
+		log.Printf("Successfully connected to %s:%d\n", connectionHostname, connectionPort)
+	}
+
 	defer conn.Close()
 
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err
 	}
 
-	if err = writeJavaStatusHandshakeRequestPacket(conn, int32(opts.ProtocolVersion), connectionHostname, connectionPort); err != nil {
+	if err = writeJavaStatusHandshakePacket(conn, int32(opts.ProtocolVersion), hostname, nilValueSwap(port, util.DefaultJavaPort)); err != nil {
 		return nil, err
+	}
+
+	if opts.Debug {
+		log.Printf("[S <- C] Wrote handshake packet (proto=%d, host=%s, port=%d, next_state=0)\n", opts.ProtocolVersion, hostname, nilValueSwap(port, util.DefaultJavaPort))
 	}
 
 	if err = writeJavaStatusStatusRequestPacket(conn); err != nil {
 		return nil, err
 	}
 
+	if opts.Debug {
+		log.Println("[S <- C] Wrote status request packet")
+	}
+
 	if err = readJavaStatusStatusResponsePacket(conn, &rawResponse); err != nil {
 		return nil, err
+	}
+
+	if opts.Debug {
+		log.Println("[S -> C] Read status response packet")
 	}
 
 	if opts.Ping {
@@ -150,10 +185,18 @@ func getStatusModern(host string, options ...options.StatusModern) (*response.St
 			return nil, err
 		}
 
+		if opts.Debug {
+			log.Printf("[S <- C] Wrote ping packet (payload=%d)\n", payload)
+		}
+
 		pingStart := time.Now()
 
 		if err = readJavaStatusPongPacket(conn, payload); err != nil {
 			return nil, err
+		}
+
+		if opts.Debug {
+			log.Printf("[S -> C] Read ping packet (payload=%d)\n", payload)
 		}
 
 		latency = time.Since(pingStart)
@@ -171,7 +214,7 @@ func parseJavaStatusOptions(opts ...options.StatusModern) options.StatusModern {
 }
 
 // https://wiki.vg/Server_List_Ping#Handshake
-func writeJavaStatusHandshakeRequestPacket(w io.Writer, protocolVersion int32, host string, port uint16) error {
+func writeJavaStatusHandshakePacket(w io.Writer, protocolVersion int32, host string, port uint16) error {
 	buf := &bytes.Buffer{}
 
 	// Packet ID - varint

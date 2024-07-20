@@ -52,7 +52,7 @@ func main() {
 		err    error
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(opts.Timeout))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*time.Duration(opts.Timeout)+time.Millisecond*500)
 
 	defer cancel()
 

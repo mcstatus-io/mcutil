@@ -16,7 +16,6 @@ import (
 	"github.com/mcstatus-io/mcutil/v4/formatting"
 	"github.com/mcstatus-io/mcutil/v4/options"
 	"github.com/mcstatus-io/mcutil/v4/response"
-	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
 var (
@@ -28,12 +27,12 @@ var (
 )
 
 // Bedrock retrieves the status of a Bedrock Edition Minecraft server.
-func Bedrock(ctx context.Context, host string, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
+func Bedrock(ctx context.Context, hostname string, port uint16, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
 	r := make(chan *response.StatusBedrock, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := getStatusBedrock(host, options...)
+		result, err := getStatusBedrock(hostname, port, options...)
 
 		if err != nil {
 			e <- err
@@ -56,23 +55,10 @@ func Bedrock(ctx context.Context, host string, options ...options.StatusBedrock)
 	}
 }
 
-func getStatusBedrock(host string, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
-	var (
-		opts                  = parseBedrockStatusOptions(options...)
-		connectionPort uint16 = uint16(util.DefaultBedrockPort)
-	)
+func getStatusBedrock(hostname string, port uint16, options ...options.StatusBedrock) (*response.StatusBedrock, error) {
+	opts := parseBedrockStatusOptions(options...)
 
-	connectionHostname, port, err := util.ParseAddress(host)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if port != nil {
-		connectionPort = *port
-	}
-
-	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", connectionHostname, connectionPort), opts.Timeout)
+	conn, err := net.DialTimeout("udp", fmt.Sprintf("%s:%d", hostname, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err

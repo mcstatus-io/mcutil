@@ -64,12 +64,12 @@ type rawJavaStatus struct {
 }
 
 // Modern retrieves the status of any 1.7+ Minecraft server.
-func Modern(ctx context.Context, host string, options ...options.StatusModern) (*response.StatusModern, error) {
+func Modern(ctx context.Context, hostname string, port uint16, options ...options.StatusModern) (*response.StatusModern, error) {
 	r := make(chan *response.StatusModern, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := getStatusModern(host, options...)
+		result, err := getStatusModern(hostname, port, options...)
 
 		if err != nil {
 			e <- err
@@ -92,34 +92,18 @@ func Modern(ctx context.Context, host string, options ...options.StatusModern) (
 	}
 }
 
-func getStatusModern(host string, options ...options.StatusModern) (*response.StatusModern, error) {
+func getStatusModern(hostname string, port uint16, options ...options.StatusModern) (*response.StatusModern, error) {
 	var (
 		opts                                   = parseJavaStatusOptions(options...)
-		connectionHostname string              = ""
-		connectionPort     uint16              = util.DefaultJavaPort
+		connectionHostname string              = hostname
+		connectionPort     uint16              = port
 		srvRecord          *response.SRVRecord = nil
 		rawResponse        rawJavaStatus       = rawJavaStatus{}
 		latency            time.Duration       = 0
 	)
 
-	hostname, port, err := util.ParseAddress(host)
-
-	if err != nil {
-		return nil, err
-	}
-
-	connectionHostname = hostname
-
-	if port != nil {
-		connectionPort = *port
-	}
-
-	if opts.Debug {
-		log.Printf("Parsed address into split hostname and port (host=%s, port=%v, default_port=%d)", connectionHostname, nilValueSwap(port, util.DefaultJavaPort), util.DefaultJavaPort)
-	}
-
-	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {
-		record, err := util.LookupSRV(host)
+	if opts.EnableSRV && port == util.DefaultJavaPort && net.ParseIP(connectionHostname) == nil {
+		record, err := util.LookupSRV(hostname)
 
 		if err == nil && record != nil {
 			connectionHostname = record.Target
@@ -131,7 +115,7 @@ func getStatusModern(host string, options ...options.StatusModern) (*response.St
 			}
 
 			if opts.Debug {
-				log.Printf("Found an SRV record (target_host=%s, target_port=%d)", record.Target, record.Port)
+				log.Printf("Found an SRV record (host=%s, port=%d)", record.Target, record.Port)
 			}
 		} else if opts.Debug {
 			log.Println("Could not find an SRV record for this host")
@@ -154,12 +138,12 @@ func getStatusModern(host string, options ...options.StatusModern) (*response.St
 		return nil, err
 	}
 
-	if err = writeJavaStatusHandshakePacket(conn, int32(opts.ProtocolVersion), hostname, nilValueSwap(port, util.DefaultJavaPort)); err != nil {
+	if err = writeJavaStatusHandshakePacket(conn, int32(opts.ProtocolVersion), hostname, port); err != nil {
 		return nil, err
 	}
 
 	if opts.Debug {
-		log.Printf("[S <- C] Wrote handshake packet (proto=%d, host=%s, port=%d, next_state=0)\n", opts.ProtocolVersion, hostname, nilValueSwap(port, util.DefaultJavaPort))
+		log.Printf("[S <- C] Wrote handshake packet (proto=%d, host=%s, port=%d, next_state=0)\n", opts.ProtocolVersion, hostname, port)
 	}
 
 	if err = writeJavaStatusStatusRequestPacket(conn); err != nil {

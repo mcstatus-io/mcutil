@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/mcstatus-io/mcutil/v4/status"
+	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
 func TestModernRaw(t *testing.T) {
-	resp, err := status.ModernRaw(context.Background(), "demo.mcstatus.io")
+	resp, err := status.ModernRaw(context.Background(), "demo.mcstatus.io", util.DefaultJavaPort)
 
 	if err != nil {
 		t.Fatal(err)

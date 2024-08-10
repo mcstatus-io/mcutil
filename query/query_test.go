@@ -5,10 +5,11 @@ import (
 	"testing"
 
 	"github.com/mcstatus-io/mcutil/v4/query"
+	"github.com/mcstatus-io/mcutil/v4/util"
 )
 
 func TestBasic(t *testing.T) {
-	resp, err := query.Basic(context.Background(), "demo.mcstatus.io")
+	resp, err := query.Basic(context.Background(), "demo.mcstatus.io", util.DefaultJavaPort)
 
 	if err != nil {
 		t.Fatal(err)
@@ -18,7 +19,7 @@ func TestBasic(t *testing.T) {
 }
 
 func TestFull(t *testing.T) {
-	resp, err := query.Full(context.Background(), "demo.mcstatus.io")
+	resp, err := query.Full(context.Background(), "demo.mcstatus.io", util.DefaultJavaPort)
 
 	if err != nil {
 		t.Fatal(err)

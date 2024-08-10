@@ -40,10 +40,10 @@ type Client struct {
 }
 
 // Dial connects to the server using the address provided and returns a new client.
-func Dial(host string, port uint16, options ...options.RCON) (*Client, error) {
+func Dial(hostname string, port uint16, options ...options.RCON) (*Client, error) {
 	opts := parseOptions(options...)
 
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", host, port), opts.Timeout)
+	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%d", hostname, port), opts.Timeout)
 
 	if err != nil {
 		return nil, err

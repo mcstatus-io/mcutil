@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/jessevdk/go-flags"
@@ -14,6 +15,7 @@ import (
 
 var (
 	host string
+	port uint16
 	opts passedOptions = passedOptions{}
 )
 
@@ -44,6 +46,35 @@ func init() {
 	}
 
 	host = args[0]
+
+	if len(args) < 2 {
+		switch opts.Type {
+		case "java", "legacy", "raw":
+			{
+				port = 25565
+
+				break
+			}
+		case "bedrock":
+			{
+				port = 19132
+
+				break
+			}
+		default:
+			{
+				fmt.Printf("unknown --type value: %s\n", opts.Type)
+			}
+		}
+	} else {
+		value, err := strconv.ParseUint(args[1], 10, 16)
+
+		if err != nil {
+			panic(err)
+		}
+
+		port = uint16(value)
+	}
 }
 
 func main() {
@@ -59,7 +90,7 @@ func main() {
 	switch opts.Type {
 	case "java":
 		{
-			result, err = status.Modern(ctx, host, options.StatusModern{
+			result, err = status.Modern(ctx, host, port, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -71,7 +102,7 @@ func main() {
 		}
 	case "raw":
 		{
-			result, err = status.ModernRaw(ctx, host, options.StatusModern{
+			result, err = status.ModernRaw(ctx, host, port, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -81,7 +112,7 @@ func main() {
 		}
 	case "legacy":
 		{
-			result, err = status.Legacy(ctx, host, options.StatusLegacy{
+			result, err = status.Legacy(ctx, host, port, options.StatusLegacy{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
 				ProtocolVersion: 47,
@@ -91,7 +122,7 @@ func main() {
 		}
 	case "bedrock":
 		{
-			result, err = status.Bedrock(ctx, host, options.StatusBedrock{
+			result, err = status.Bedrock(ctx, host, port, options.StatusBedrock{
 				Timeout: time.Duration(opts.Timeout) * time.Second,
 			})
 

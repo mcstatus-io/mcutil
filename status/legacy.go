@@ -24,12 +24,12 @@ var (
 )
 
 // Legacy retrieves the status of any Java Edition Minecraft server, but with reduced properties compared to Modern().
-func Legacy(ctx context.Context, host string, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
+func Legacy(ctx context.Context, hostname string, port uint16, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
 	r := make(chan *response.StatusLegacy, 1)
 	e := make(chan error, 1)
 
 	go func() {
-		result, err := getStatusLegacy(host, options...)
+		result, err := getStatusLegacy(hostname, port, options...)
 
 		if err != nil {
 			e <- err
@@ -52,21 +52,16 @@ func Legacy(ctx context.Context, host string, options ...options.StatusLegacy) (
 	}
 }
 
-func getStatusLegacy(host string, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
+func getStatusLegacy(hostname string, port uint16, options ...options.StatusLegacy) (*response.StatusLegacy, error) {
 	var (
-		opts                               = parseJavaStatusLegacyOptions(options...)
-		connectionPort uint16              = util.DefaultJavaPort
-		srvRecord      *response.SRVRecord = nil
+		opts                                   = parseJavaStatusLegacyOptions(options...)
+		connectionHostname                     = hostname
+		connectionPort     uint16              = port
+		srvRecord          *response.SRVRecord = nil
 	)
 
-	connectionHostname, port, err := util.ParseAddress(host)
-
-	if err != nil {
-		return nil, err
-	}
-
-	if opts.EnableSRV && port == nil && net.ParseIP(connectionHostname) == nil {
-		record, err := util.LookupSRV(host)
+	if opts.EnableSRV && port == util.DefaultJavaPort && net.ParseIP(connectionHostname) == nil {
+		record, err := util.LookupSRV(hostname)
 
 		if err == nil && record != nil {
 			connectionHostname = record.Target

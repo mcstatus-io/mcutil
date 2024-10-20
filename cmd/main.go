@@ -20,10 +20,12 @@ var (
 )
 
 type passedOptions struct {
-	Type       string `short:"t" long:"type" description:"The type of status to retrieve" default:"java"`
-	Timeout    uint   `short:"T" long:"timeout" description:"The amount of seconds before the status retrieval times out" default:"5"`
-	DisableSRV bool   `short:"S" long:"disable-srv" description:"Disables SRV lookup"`
-	Debug      bool   `short:"D" long:"debug" description:"Enables debug printing to the console"`
+	Type        string `short:"t" long:"type" description:"The type of status to retrieve" default:"java"`
+	Timeout     uint   `short:"T" long:"timeout" description:"The amount of seconds before the status retrieval times out" default:"5"`
+	DisableSRV  bool   `short:"S" long:"disable-srv" description:"Disables SRV lookup"`
+	Debug       bool   `short:"D" long:"debug" description:"Enables debug printing to the console"`
+	Protocol    int    `short:"p" long:"protocol" description:"Sets the protocol version for the status ping (Java Edition only)"`
+	DisablePing bool   `short:"P" long:"disable-ping" description:"Disables the extra ping-pong payloads during status retrieval"`
 }
 
 func init() {
@@ -43,6 +45,10 @@ func init() {
 		fmt.Println("missing host argument")
 
 		os.Exit(1)
+	}
+
+	if opts.Protocol == 0 {
+		opts.Protocol = 47
 	}
 
 	host = args[0]
@@ -93,8 +99,8 @@ func main() {
 			result, err = status.Modern(ctx, host, port, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
-				ProtocolVersion: 47,
-				Ping:            true,
+				ProtocolVersion: opts.Protocol,
+				Ping:            !opts.DisablePing,
 				Debug:           opts.Debug,
 			})
 
@@ -105,7 +111,7 @@ func main() {
 			result, err = status.ModernRaw(ctx, host, port, options.StatusModern{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
-				ProtocolVersion: 47,
+				ProtocolVersion: opts.Protocol,
 			})
 
 			break
@@ -115,7 +121,7 @@ func main() {
 			result, err = status.Legacy(ctx, host, port, options.StatusLegacy{
 				EnableSRV:       !opts.DisableSRV,
 				Timeout:         time.Duration(opts.Timeout) * time.Second,
-				ProtocolVersion: 47,
+				ProtocolVersion: opts.Protocol,
 			})
 
 			break

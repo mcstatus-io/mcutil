@@ -18,7 +18,6 @@ type Item struct {
 
 // Raw returns the Minecraft encoding of the formatting (§ + formatting codes/color + text).
 func (i Item) Raw() (result string) {
-
 	if i.Color != nil {
 		result += i.Color.ToRaw()
 	}
@@ -114,6 +113,28 @@ func (i Item) HTML() string {
 	return fmt.Sprintf("<span%s%s>%s</span>", rawClass, rawStyle, html.EscapeString(i.Text))
 }
 
+// IsSameAs returns whether the formatting is identical to another
+// item.
+func (i Item) IsSameAs(j Item) bool {
+	if (j.Color == nil && i.Color != nil) || (j.Color != nil && i.Color == nil) || (*i.Color != *j.Color) || len(i.Decorators) != len(j.Decorators) {
+		return false
+	}
+
+	for _, a := range i.Decorators {
+		if !contains(j.Decorators, a) {
+			return false
+		}
+	}
+
+	for _, a := range j.Decorators {
+		if !contains(i.Decorators, a) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func toRaw(tree []Item) (result string) {
 	for _, v := range tree {
 		result += v.Raw()
@@ -140,4 +161,14 @@ func toHTML(tree []Item) (result string) {
 	result += "</span>"
 
 	return
+}
+
+func contains[T comparable](arr []T, v T) bool {
+	for _, a := range arr {
+		if a == v {
+			return true
+		}
+	}
+
+	return false
 }

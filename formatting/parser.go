@@ -24,6 +24,8 @@ func Parse(input interface{}) (*Result, error) {
 		return nil, err
 	}
 
+	tree = cleanupTree(tree)
+
 	return &Result{
 		Tree:  tree,
 		Raw:   toRaw(tree),
@@ -325,4 +327,19 @@ func mergeChatProperties(parent, child map[string]interface{}) map[string]interf
 	}
 
 	return result
+}
+
+func cleanupTree(result []Item) []Item {
+	newResult := make([]Item, 0)
+
+	for i := 0; i < len(result); i++ {
+		j := len(newResult) - 1
+
+		if i != 0 && result[i].IsSameAs(newResult[j]) {
+			newResult[j].Text += result[i].Text
+		} else {
+			newResult = append(newResult, result[i])
+		}
+	}
+	return newResult
 }

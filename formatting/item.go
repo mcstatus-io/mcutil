@@ -3,6 +3,7 @@ package formatting
 import (
 	"fmt"
 	"html"
+	"reflect"
 	"strings"
 
 	"github.com/mcstatus-io/mcutil/v4/formatting/colors"
@@ -116,7 +117,7 @@ func (i Item) HTML() string {
 // IsSameAs returns whether the formatting is identical to another
 // item.
 func (i Item) IsSameAs(j Item) bool {
-	if (j.Color == nil && i.Color != nil) || (j.Color != nil && i.Color == nil) || (*i.Color != *j.Color) || len(i.Decorators) != len(j.Decorators) {
+	if !reflect.DeepEqual(i.Color, j.Color) || len(i.Decorators) != len(j.Decorators) {
 		return false
 	}
 

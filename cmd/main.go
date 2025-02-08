@@ -10,6 +10,7 @@ import (
 
 	"github.com/jessevdk/go-flags"
 	"github.com/mcstatus-io/mcutil/v4/options"
+	"github.com/mcstatus-io/mcutil/v4/query"
 	"github.com/mcstatus-io/mcutil/v4/status"
 )
 
@@ -55,7 +56,7 @@ func init() {
 
 	if len(args) < 2 {
 		switch opts.Type {
-		case "java", "legacy", "raw":
+		case "java", "legacy", "raw", "qbasic", "qfull":
 			{
 				port = 25565
 
@@ -131,6 +132,18 @@ func main() {
 			result, err = status.Bedrock(ctx, host, port, options.StatusBedrock{
 				Timeout: time.Duration(opts.Timeout) * time.Second,
 			})
+
+			break
+		}
+	case "qbasic":
+		{
+			result, err = query.Basic(ctx, host, port)
+
+			break
+		}
+	case "qfull":
+		{
+			result, err = query.Full(ctx, host, port)
 
 			break
 		}

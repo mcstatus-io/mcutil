@@ -164,8 +164,10 @@ func (r *Client) Login(password string) error {
 			if err != nil {
 				fmt.Println(err)
 
-				r.conn.Close()
-				r.conn = nil
+				if r.conn != nil {
+					r.conn.Close()
+					r.conn = nil
+				}
 
 				break
 			}

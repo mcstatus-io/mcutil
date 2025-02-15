@@ -9,7 +9,7 @@ import (
 )
 
 func TestBedrock(t *testing.T) {
-	resp, err := status.Bedrock(context.Background(), "demo.mcstatus.io", util.DefaultBedrockPort)
+	resp, err := status.Bedrock(context.Background(), "lifesteal.net", util.DefaultBedrockPort)
 
 	if err != nil {
 		t.Fatal(err)

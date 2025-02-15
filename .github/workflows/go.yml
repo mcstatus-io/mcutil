@@ -19,10 +19,10 @@ jobs:
         check-latest: true
       
     - name: Download Dependencies
-      run: go get
+      run: go get ./...
       
     - name: Lint
-      run: go vet
+      run: go vet ./...
       
     - name: Test
-      run: go test -v
+      run: go test -v ./...

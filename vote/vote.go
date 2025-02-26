@@ -102,6 +102,11 @@ func sendVote(host string, port uint16, opts options.Vote) error {
 		}
 
 		dataSegments := strings.Split(string(data[:len(data)-1]), " ")
+
+		if len(dataSegments) < 2 {
+			return fmt.Errorf("vote: server sent invalid handshake packet with value: %s", data[:len(data)-1])
+		}
+
 		version = dataSegments[1]
 		majorVersion = strings.Split(version, ".")[0]
 

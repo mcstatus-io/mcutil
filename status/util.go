@@ -18,11 +18,11 @@ func writePacket(w io.Writer, data *bytes.Buffer) error {
 	return err
 }
 
-func parsePlayerID(value interface{}) (string, bool) {
+func parsePlayerID(value any) (string, bool) {
 	switch v := value.(type) {
 	case string:
 		return v, true
-	case []interface{}:
+	case []any:
 		{
 			if len(v) != 4 {
 				return "", false

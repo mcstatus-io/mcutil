@@ -43,7 +43,7 @@ var (
 )
 
 // Parse attempts to return a Color type based on a color code string, color name string, or a Color type itself.
-func Parse(value interface{}) (Color, bool) {
+func Parse(value any) (Color, bool) {
 	switch value {
 	case '0', "0", "black", Black:
 		return Black, true

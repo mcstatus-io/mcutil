@@ -48,7 +48,7 @@ func (d Decorator) ToRaw() string {
 }
 
 // Parse attempts to return a Decorator type based on a formatting code string, formatting name string, or a Decorator type itself.
-func Parse(value interface{}) (Decorator, bool) {
+func Parse(value any) (Decorator, bool) {
 	switch value {
 	case 'k', "k", "obfuscated", Obfuscated:
 		return Obfuscated, true

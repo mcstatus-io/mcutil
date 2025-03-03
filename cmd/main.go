@@ -86,7 +86,7 @@ func init() {
 
 func main() {
 	var (
-		result interface{}
+		result any
 		err    error
 	)
 

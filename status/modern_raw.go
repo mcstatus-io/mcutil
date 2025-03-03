@@ -12,8 +12,8 @@ import (
 )
 
 // ModernRaw returns the raw status data of any 1.7+ Java Edition Minecraft server.
-func ModernRaw(ctx context.Context, hostname string, port uint16, options ...options.StatusModern) (map[string]interface{}, error) {
-	r := make(chan map[string]interface{}, 1)
+func ModernRaw(ctx context.Context, hostname string, port uint16, options ...options.StatusModern) (map[string]any, error) {
+	r := make(chan map[string]any, 1)
 	e := make(chan error, 1)
 
 	go func() {
@@ -40,13 +40,13 @@ func ModernRaw(ctx context.Context, hostname string, port uint16, options ...opt
 	}
 }
 
-func getStatusRaw(hostname string, port uint16, options ...options.StatusModern) (map[string]interface{}, error) {
+func getStatusRaw(hostname string, port uint16, options ...options.StatusModern) (map[string]any, error) {
 	var (
-		opts                                      = parseJavaStatusOptions(options...)
-		connectionHostname                        = hostname
-		connectionPort     uint16                 = port
-		result             map[string]interface{} = make(map[string]interface{})
-		payload            int64                  = rand.Int63()
+		opts                              = parseJavaStatusOptions(options...)
+		connectionHostname                = hostname
+		connectionPort     uint16         = port
+		result             map[string]any = make(map[string]any)
+		payload            int64          = rand.Int63()
 	)
 
 	if opts.EnableSRV && port == util.DefaultJavaPort && net.ParseIP(connectionHostname) == nil {

@@ -17,7 +17,7 @@ type Result struct {
 }
 
 // Parse parses the formatting of any string or Chat object.
-func Parse(input interface{}) (*Result, error) {
+func Parse(input any) (*Result, error) {
 	tree, err := parseAny(input, nil)
 
 	if err != nil {
@@ -34,11 +34,11 @@ func Parse(input interface{}) (*Result, error) {
 	}, nil
 }
 
-func parseAny(input interface{}, parent map[string]interface{}) ([]Item, error) {
+func parseAny(input any, parent map[string]any) ([]Item, error) {
 	result := make([]Item, 0)
 
 	switch value := input.(type) {
-	case map[string]interface{}:
+	case map[string]any:
 		{
 			// Merge the properties from the parent component into this one.
 			current := mergeChatProperties(parent, value)
@@ -57,7 +57,7 @@ func parseAny(input interface{}, parent map[string]interface{}) ([]Item, error) 
 
 			// Iterate over the child components and pass the current component to
 			// them so they can inherit our properties.
-			if extra, ok := current["extra"].([]interface{}); ok {
+			if extra, ok := current["extra"].([]any); ok {
 				for _, child := range extra {
 					extraChildren, err := parseAny(child, current)
 
@@ -105,7 +105,7 @@ func parseAny(input interface{}, parent map[string]interface{}) ([]Item, error) 
 	return result, nil
 }
 
-func parseString(text string, props map[string]interface{}) ([]Item, error) {
+func parseString(text string, props map[string]any) ([]Item, error) {
 	if strings.Contains(text, "\u00A7") {
 		// This string uses the old text-based approach to formatting the resulting string. This
 		// system is incompatible with inheriting any chat component properties, and therefore
@@ -292,7 +292,7 @@ func parseString(text string, props map[string]interface{}) ([]Item, error) {
 	}, nil
 }
 
-func parseBool(value interface{}) bool {
+func parseBool(value any) bool {
 	// Although bool is the most common form of a boolean value used in the chat
 	// component type, the standard is not properly documented and several types
 	// are used out in the wild. We must support them all, even if I have never
@@ -310,8 +310,8 @@ func parseBool(value interface{}) bool {
 	}
 }
 
-func mergeChatProperties(parent, child map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
+func mergeChatProperties(parent, child map[string]any) map[string]any {
+	result := make(map[string]any)
 
 	for k, v := range parent {
 		// The "extra" property cannot be inherited, or this will cause an infinite loop.

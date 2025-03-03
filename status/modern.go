@@ -36,12 +36,12 @@ type rawJavaStatus struct {
 		Max    *int64 `json:"max"`
 		Online *int64 `json:"online"`
 		Sample []struct {
-			ID   interface{} `json:"id"`
-			Name string      `json:"name"`
+			ID   any    `json:"id"`
+			Name string `json:"name"`
 		} `json:"sample"`
 	} `json:"players"`
-	Description interface{} `json:"description"`
-	Favicon     *string     `json:"favicon"`
+	Description any     `json:"description"`
+	Favicon     *string `json:"favicon"`
 	ModInfo     struct {
 		List []struct {
 			ID      string `json:"modid"`
@@ -242,7 +242,7 @@ func writeJavaStatusStatusRequestPacket(w io.Writer) error {
 }
 
 // https://wiki.vg/Server_List_Ping#Response
-func readJavaStatusStatusResponsePacket(r io.Reader, result interface{}) error {
+func readJavaStatusStatusResponsePacket(r io.Reader, result any) error {
 	// Packet length - varint
 	{
 		if _, err := proto.ReadVarInt(r); err != nil {

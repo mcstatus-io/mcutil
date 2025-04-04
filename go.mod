@@ -1,7 +1,9 @@
 module github.com/mcstatus-io/mcutil/v4
 
-go 1.18
+go 1.23.0
 
-require github.com/jessevdk/go-flags v1.5.0
+toolchain go1.23.4
 
-require golang.org/x/sys v0.20.0 // indirect
+require github.com/jessevdk/go-flags v1.6.1
+
+require golang.org/x/sys v0.31.0 // indirect

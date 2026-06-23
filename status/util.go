@@ -4,8 +4,13 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"regexp"
 
 	"github.com/mcstatus-io/mcutil/v4/proto"
+)
+
+var (
+	ipv4RegEx = regexp.MustCompile(`^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$`)
 )
 
 func writePacket(w io.Writer, data *bytes.Buffer) error {

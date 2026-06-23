@@ -138,12 +138,12 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 		return nil, err
 	}
 
-	if err = writeJavaStatusHandshakePacket(conn, int32(opts.ProtocolVersion), hostname, port); err != nil {
+	if err = writeJavaStatusHandshakePacket(conn, int32(opts.ProtocolVersion), connectionHostname, connectionPort); err != nil {
 		return nil, err
 	}
 
 	if opts.Debug {
-		log.Printf("[S <- C] Wrote handshake packet (proto=%d, host=%s, port=%d, next_state=0)\n", opts.ProtocolVersion, hostname, port)
+		log.Printf("[S <- C] Wrote handshake packet (proto=%d, host=%s, port=%d, next_state=0)\n", opts.ProtocolVersion, connectionHostname, connectionPort)
 	}
 
 	if err = writeJavaStatusStatusRequestPacket(conn); err != nil {
@@ -198,7 +198,7 @@ func parseJavaStatusOptions(opts ...options.StatusModern) options.StatusModern {
 }
 
 // https://wiki.vg/Server_List_Ping#Handshake
-func writeJavaStatusHandshakePacket(w io.Writer, protocolVersion int32, host string, port uint16) error {
+func writeJavaStatusHandshakePacket(w io.Writer, protocolVersion int32, hostname string, port uint16) error {
 	buf := &bytes.Buffer{}
 
 	// Packet ID - varint
@@ -212,8 +212,20 @@ func writeJavaStatusHandshakePacket(w io.Writer, protocolVersion int32, host str
 	}
 
 	// Host - string
-	if err := proto.WriteString(host, buf); err != nil {
-		return err
+	// If the hostname provided is in the format of an IPv4 address, a reverse DNS lookup shall
+	// be attempted.
+	{
+		if ipv4RegEx.MatchString(hostname) {
+			results, err := net.LookupAddr(hostname)
+
+			if err == nil && len(results) > 0 {
+				hostname = results[0]
+			}
+		}
+
+		if err := proto.WriteString(hostname, buf); err != nil {
+			return err
+		}
 	}
 
 	// Port - uint16

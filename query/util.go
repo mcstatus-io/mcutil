@@ -13,8 +13,9 @@ import (
 
 var (
 	defaultQueryOptions = options.Query{
-		Timeout:   time.Second * 5,
-		SessionID: 0,
+		Timeout:           time.Second * 5,
+		SessionID:         0,
+		ReceiveLimitBytes: 1 << 20, // 1 Megabyte
 	}
 	magic = []byte{0xFE, 0xFD}
 )

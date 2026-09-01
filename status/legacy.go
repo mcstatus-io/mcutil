@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"io"
 	"net"
 	"strconv"
 	"strings"
@@ -18,8 +19,9 @@ import (
 
 var (
 	defaultJavaStatusLegacyOptions = options.StatusLegacy{
-		EnableSRV: true,
-		Timeout:   time.Second * 5,
+		EnableSRV:         true,
+		Timeout:           time.Second * 5,
+		ReceiveLimitBytes: 1 << 20, // 1 Megabyte
 	}
 )
 
@@ -82,6 +84,8 @@ func getStatusLegacy(hostname string, port uint16, options ...options.StatusLega
 
 	defer conn.Close()
 
+	r := io.LimitReader(conn, opts.ReceiveLimitBytes)
+
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err
 	}
@@ -101,7 +105,7 @@ func getStatusLegacy(hostname string, port uint16, options ...options.StatusLega
 		{
 			var packetType byte
 
-			if err := binary.Read(conn, binary.BigEndian, &packetType); err != nil {
+			if err := binary.Read(r, binary.BigEndian, &packetType); err != nil {
 				return nil, err
 			}
 
@@ -114,7 +118,7 @@ func getStatusLegacy(hostname string, port uint16, options ...options.StatusLega
 
 		// Length - uint16
 		{
-			if err = binary.Read(conn, binary.BigEndian, &packetLength); err != nil {
+			if err = binary.Read(r, binary.BigEndian, &packetLength); err != nil {
 				return nil, err
 			}
 
@@ -129,7 +133,7 @@ func getStatusLegacy(hostname string, port uint16, options ...options.StatusLega
 		{
 			data = make([]uint16, packetLength)
 
-			if err = binary.Read(conn, binary.BigEndian, &data); err != nil {
+			if err = binary.Read(r, binary.BigEndian, &data); err != nil {
 				return nil, err
 			}
 		}

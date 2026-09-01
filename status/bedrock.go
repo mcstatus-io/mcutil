@@ -20,8 +20,9 @@ import (
 
 var (
 	defaultBedrockStatusOptions = options.StatusBedrock{
-		Timeout:    time.Second * 5,
-		ClientGUID: 0,
+		Timeout:           time.Second * 5,
+		ClientGUID:        0,
+		ReceiveLimitBytes: 1 << 20, // 1 Megabyte
 	}
 	bedrockMagic = []byte{0x00, 0xFF, 0xFF, 0x00, 0xFE, 0xFE, 0xFE, 0xFE, 0xFD, 0xFD, 0xFD, 0xFD, 0x12, 0x34, 0x56, 0x78}
 )
@@ -66,7 +67,7 @@ func getStatusBedrock(hostname string, port uint16, options ...options.StatusBed
 
 	defer conn.Close()
 
-	r := bufio.NewReader(conn)
+	r := bufio.NewReader(io.LimitReader(conn, opts.ReceiveLimitBytes))
 
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err
@@ -317,7 +318,6 @@ func getStatusBedrock(hostname string, port uint16, options ...options.StatusBed
 func parseBedrockStatusOptions(opts ...options.StatusBedrock) options.StatusBedrock {
 	if len(opts) < 1 {
 		options := options.StatusBedrock(defaultBedrockStatusOptions)
-
 		options.ClientGUID = rand.Int63()
 
 		return options

@@ -3,6 +3,7 @@ package status
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"net"
 	"time"
@@ -66,6 +67,8 @@ func getStatusRaw(hostname string, port uint16, options ...options.StatusModern)
 
 	defer conn.Close()
 
+	r := io.LimitReader(conn, opts.ReceiveLimitBytes)
+
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err
 	}
@@ -78,7 +81,7 @@ func getStatusRaw(hostname string, port uint16, options ...options.StatusModern)
 		return nil, err
 	}
 
-	if err = readJavaStatusStatusResponsePacket(conn, &result); err != nil {
+	if err = readJavaStatusStatusResponsePacket(r, &result); err != nil {
 		return nil, err
 	}
 
@@ -86,7 +89,7 @@ func getStatusRaw(hostname string, port uint16, options ...options.StatusModern)
 		return nil, err
 	}
 
-	if err = readJavaStatusPongPacket(conn, payload); err != nil {
+	if err = readJavaStatusPongPacket(r, payload); err != nil {
 		return nil, err
 	}
 

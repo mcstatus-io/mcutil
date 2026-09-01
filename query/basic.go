@@ -56,7 +56,7 @@ func performBasicQuery(hostname string, port uint16, options ...options.Query) (
 
 	defer conn.Close()
 
-	r := bufio.NewReader(conn)
+	r := bufio.NewReader(io.LimitReader(conn, opts.ReceiveLimitBytes))
 
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err

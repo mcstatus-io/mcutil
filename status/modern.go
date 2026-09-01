@@ -20,11 +20,12 @@ import (
 )
 
 var defaultJavaStatusOptions = options.StatusModern{
-	EnableSRV:       true,
-	Timeout:         time.Second * 5,
-	ProtocolVersion: -1,
-	Ping:            true,
-	Debug:           false,
+	EnableSRV:         true,
+	Timeout:           time.Second * 5,
+	ProtocolVersion:   -1,
+	ReceiveLimitBytes: 1 << 20, // 1 Megabyte
+	Ping:              true,
+	Debug:             false,
 }
 
 type rawJavaStatus struct {
@@ -134,6 +135,8 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 
 	defer conn.Close()
 
+	r := io.LimitReader(conn, opts.ReceiveLimitBytes)
+
 	if err = conn.SetDeadline(time.Now().Add(opts.Timeout)); err != nil {
 		return nil, err
 	}
@@ -154,7 +157,7 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 		log.Println("[S <- C] Wrote status request packet")
 	}
 
-	if err = readJavaStatusStatusResponsePacket(conn, &rawResponse); err != nil {
+	if err = readJavaStatusStatusResponsePacket(r, &rawResponse); err != nil {
 		return nil, err
 	}
 
@@ -175,7 +178,7 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 
 		pingStart := time.Now()
 
-		if err = readJavaStatusPongPacket(conn, payload); err != nil {
+		if err = readJavaStatusPongPacket(r, payload); err != nil {
 			return nil, err
 		}
 

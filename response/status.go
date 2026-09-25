@@ -54,6 +54,7 @@ type StatusLegacy struct {
 	Players   LegacyPlayers     `json:"players"`
 	MOTD      formatting.Result `json:"motd"`
 	SRVRecord *SRVRecord        `json:"srv_record"`
+	Latency   time.Duration     `json:"latency"`
 }
 
 // LegacyPlayers is the player information returned from a legacy server. This is the
@@ -77,4 +78,5 @@ type StatusBedrock struct {
 	GamemodeID      *int64             `json:"gamemode_id"`
 	PortIPv4        *uint16            `json:"port_ipv4"`
 	PortIPv6        *uint16            `json:"port_ipv6"`
+	Latency         time.Duration      `json:"latency"`
 }

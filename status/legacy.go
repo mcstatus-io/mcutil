@@ -98,6 +98,11 @@ func getStatusLegacy(hostname string, port uint16, options ...options.StatusLega
 		}
 	}
 
+	var (
+		receiveStart time.Time = time.Now()
+		latency      time.Duration
+	)
+
 	// Server to client packet
 	// https://wiki.vg/Server_List_Ping#Server_to_client
 	{
@@ -113,6 +118,8 @@ func getStatusLegacy(hostname string, port uint16, options ...options.StatusLega
 				return nil, fmt.Errorf("status: received unexpected packet type (expected=0xFF, received=0x%02X)", packetType)
 			}
 		}
+
+		latency = time.Since(receiveStart)
 
 		var packetLength uint16
 
@@ -192,6 +199,7 @@ func getStatusLegacy(hostname string, port uint16, options ...options.StatusLega
 				},
 				MOTD:      *motd,
 				SRVRecord: srvRecord,
+				Latency:   latency,
 			}, nil
 		}
 

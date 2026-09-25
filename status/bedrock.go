@@ -103,8 +103,12 @@ func getStatusBedrock(hostname string, port uint16, options ...options.StatusBed
 		}
 	}
 
-	var serverGUID int64
-	var serverID string
+	var (
+		serverGUID   int64
+		serverID     string
+		receiveStart time.Time = time.Now()
+		latency      time.Duration
+	)
 
 	// Unconnected pong packet
 	// https://wiki.vg/Raknet_Protocol#Unconnected_Pong
@@ -121,6 +125,8 @@ func getStatusBedrock(hostname string, port uint16, options ...options.StatusBed
 				return nil, fmt.Errorf("statusbedrock: received unexpected packet type (expected=0x1C, received=0x%02X)", packetType)
 			}
 		}
+
+		latency = time.Since(receiveStart)
 
 		// Time - int64
 		{
@@ -178,6 +184,7 @@ func getStatusBedrock(hostname string, port uint16, options ...options.StatusBed
 		GamemodeID:      nil,
 		PortIPv4:        nil,
 		PortIPv6:        nil,
+		Latency:         latency,
 	}
 
 	splitID := strings.Split(serverID, ";")

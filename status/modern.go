@@ -101,6 +101,7 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 		srvRecord          *response.SRVRecord = nil
 		rawResponse        rawJavaStatus       = rawJavaStatus{}
 		latency            time.Duration       = 0
+		receiveStart       time.Time
 	)
 
 	if opts.EnableSRV && port == util.DefaultJavaPort && net.ParseIP(connectionHostname) == nil {
@@ -157,9 +158,13 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 		log.Println("[S <- C] Wrote status request packet")
 	}
 
+	receiveStart = time.Now()
+
 	if err = readJavaStatusStatusResponsePacket(r, &rawResponse); err != nil {
 		return nil, err
 	}
+
+	latency = time.Since(receiveStart)
 
 	if opts.Debug {
 		log.Println("[S -> C] Read status response packet")
@@ -176,7 +181,7 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 			log.Printf("[S <- C] Wrote ping packet (payload=%d)\n", payload)
 		}
 
-		pingStart := time.Now()
+		receiveStart = time.Now()
 
 		if err = readJavaStatusPongPacket(r, payload); err != nil {
 			return nil, err
@@ -186,7 +191,7 @@ func getStatusModern(hostname string, port uint16, options ...options.StatusMode
 			log.Printf("[S -> C] Read ping packet (payload=%d)\n", payload)
 		}
 
-		latency = time.Since(pingStart)
+		latency = time.Since(receiveStart)
 	}
 
 	return formatJavaStatusResponse(rawResponse, srvRecord, latency)
